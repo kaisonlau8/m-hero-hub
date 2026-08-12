@@ -1,0 +1,7 @@
+{
+  "accident": "https://YOUR_PUBLIC_HOST_FOR_ACCIDENT",
+  "vip": "https://YOUR_PUBLIC_HOST_FOR_VIP",
+  "district": "https://YOUR_PUBLIC_HOST_FOR_DISTRICT",
+  "audit": "https://YOUR_PUBLIC_HOST_FOR_AUDIT",
+  "cleaner": "https://YOUR_PUBLIC_HOST_FOR_CLEANER"
+}

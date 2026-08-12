@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import socket
 import urllib.request
@@ -14,13 +15,12 @@ from flask import Flask, jsonify, render_template
 ROOT = Path(__file__).resolve().parent
 app = Flask(__name__, template_folder=str(ROOT / "templates"))
 
-# 黄页收录的控制台（公网入口 + 本地探活）
-SERVICES = [
+# 默认只写本地入口；公网 URL 放在未入库的 config/services.local.json
+_SERVICE_DEFS = [
     {
         "id": "accident",
         "name": "事故车提醒",
         "desc": "DMS 事故维修工单爬取、门店/区域报表与飞书告警",
-        "url": "http://127.0.0.1:9000",
         "local": "http://127.0.0.1:9000",
         "port": 9000,
         "accent": "orange",
@@ -29,7 +29,6 @@ SERVICES = [
         "id": "vip",
         "name": "VIP 保养提醒",
         "desc": "保养提醒任务匹配 VIP 清单，飞书卡片通知提醒人",
-        "url": "http://127.0.0.1:9002",
         "local": "http://127.0.0.1:9002",
         "port": 9002,
         "accent": "blue",
@@ -38,7 +37,6 @@ SERVICES = [
         "id": "district",
         "name": "区域报表自动化",
         "desc": "爬取 7 份 DMS 源表，生成区域各指标情况一览并推送飞书群",
-        "url": "http://127.0.0.1:9003",
         "local": "http://127.0.0.1:9003",
         "port": 9003,
         "accent": "green",
@@ -47,7 +45,6 @@ SERVICES = [
         "id": "audit",
         "name": "门店超时审计",
         "desc": "门店清单与超时提醒登记比对，督导私聊与进度看板",
-        "url": "http://127.0.0.1:3001",
         "local": "http://127.0.0.1:3001",
         "port": 3001,
         "accent": "purple",
@@ -56,12 +53,34 @@ SERVICES = [
         "id": "cleaner",
         "name": "超时机器人统计",
         "desc": "门店超时提醒机器人拉群/建群数据解析与统计控制台",
-        "url": "http://127.0.0.1:5001",
         "local": "http://127.0.0.1:5001",
         "port": 5001,
         "accent": "red",
     },
 ]
+
+
+def _load_public_urls() -> dict[str, str]:
+    """Optional local overrides: { "accident": "https://…", … }."""
+    path = ROOT / "config" / "services.local.json"
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if isinstance(data, dict):
+            return {str(k): str(v).rstrip("/") for k, v in data.items() if v}
+    except (OSError, json.JSONDecodeError, TypeError):
+        pass
+    return {}
+
+
+def _services() -> list[dict]:
+    public = _load_public_urls()
+    rows = []
+    for svc in _SERVICE_DEFS:
+        url = public.get(svc["id"]) or svc["local"]
+        rows.append({**svc, "url": url})
+    return rows
 
 
 def _port_open(port: int, host: str = "127.0.0.1", timeout: float = 0.4) -> bool:
@@ -83,9 +102,8 @@ def _http_ok(url: str, timeout: float = 1.2) -> bool:
 
 def probe_services() -> list[dict]:
     rows = []
-    for svc in SERVICES:
+    for svc in _services():
         local_up = _port_open(int(svc["port"]))
-        # Prefer lightweight local probe; fall back to public URL only if needed.
         healthy = local_up or _http_ok(svc["local"] + "/")
         rows.append({**svc, "online": bool(healthy), "local_up": bool(local_up)})
     return rows
