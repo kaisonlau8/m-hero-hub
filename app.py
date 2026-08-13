@@ -42,14 +42,6 @@ _SERVICE_DEFS = [
         "accent": "green",
     },
     {
-        "id": "audit",
-        "name": "门店超时审计",
-        "desc": "门店清单与超时提醒登记比对，督导私聊与进度看板",
-        "local": "http://127.0.0.1:3001",
-        "port": 3001,
-        "accent": "purple",
-    },
-    {
         "id": "cleaner",
         "name": "超时机器人统计",
         "desc": "门店超时提醒机器人拉群/建群数据解析与统计控制台",
