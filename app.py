@@ -49,6 +49,14 @@ _SERVICE_DEFS = [
         "port": 5001,
         "accent": "red",
     },
+    {
+        "id": "nss",
+        "name": "NSS 问卷提醒",
+        "desc": "交付 90 天后当天 09:00 私聊督导、门店服务经理与全国收件人",
+        "local": "http://127.0.0.1:9005",
+        "port": 9005,
+        "accent": "blue",
+    },
 ]
 
 
