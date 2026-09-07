@@ -57,6 +57,14 @@ _SERVICE_DEFS = [
         "port": 9005,
         "accent": "blue",
     },
+    {
+        "id": "assistant-app",
+        "name": "助手 APP 安装看板",
+        "desc": "登录清单全岗位安装率；清单有更新才发飞书日报",
+        "local": "http://127.0.0.1:9006/console/",
+        "port": 9006,
+        "accent": "green",
+    },
 ]
 
 

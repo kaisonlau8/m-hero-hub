@@ -20,6 +20,7 @@
 | 区域报表自动化 | `:9003` |
 | 超时机器人统计 | `:5001` |
 | NSS 问卷提醒 | `:9005` |
+| 助手 APP 安装看板 | `:9006` |
 
 对外跳转 URL 写在**未入库**的 `config/services.local.json`（模板见 `config/services.local.json.example`）。未配置时黄页按钮指向上述本地地址。
 
