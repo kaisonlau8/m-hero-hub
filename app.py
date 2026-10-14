@@ -11,7 +11,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-from flask import Flask, Response, g, jsonify, redirect, render_template, request
+from flask import Flask, Response, g, jsonify, redirect, render_template, request, send_from_directory
 
 ROOT = Path(__file__).resolve().parent
 app = Flask(__name__, template_folder=str(ROOT / "templates"))
@@ -30,9 +30,15 @@ app.jinja_env.globals["ds_css"] = lambda: _ds("antd-lite.css")
 app.jinja_env.globals["ds_sprite"] = lambda: _ds("sprite.svg")
 app.jinja_env.globals["ds_cards"] = lambda: _ds("cards.js")
 
+
+# --- 品牌静态资源（logo / favicon，design-system/sync.sh 同步到 ds/brand/）---
+@app.get("/ds/brand/<path:name>")
+def ds_brand(name: str):
+    return send_from_directory(str(ROOT / "ds" / "brand"), name)
+
 # --- m-hero SSO (Casdoor): inert unless MHERO_AUTH[_HUB]=audit|on is set (see docs/SSO_CASDOOR.md) ---
 from mhero_auth.flask_adapter import init_app as _mhero_auth_init
-_auth = _mhero_auth_init(app, "hub", default_mode="off", public_get_paths=["/healthz"], admin_paths=["/admin/*"], supervisor_write_paths=["/account/password"], userbar=True, userbar_account_url="/account", userbar_accounts_url="/admin/accounts")   # top-right user bar: 账号设置 + 退出登录
+_auth = _mhero_auth_init(app, "hub", default_mode="off", public_get_paths=["/healthz", "/ds/brand/*"], admin_paths=["/admin/*"], supervisor_write_paths=["/account/password"], userbar=True, userbar_account_url="/account", userbar_accounts_url="/admin/accounts")   # top-right user bar: 账号设置 + 退出登录
 
 # 默认只写本地入口；公网 URL 放在未入库的 config/services.local.json
 _SERVICE_DEFS = [
@@ -85,7 +91,7 @@ _SERVICE_DEFS = [
         "id": "nss",
         "icon": "form",
         "name": "NSS 问卷提醒",
-        "desc": "交付 90 天后当天 09:00 私聊督导、门店服务经理与全国收件人",
+        "desc": "交付 90 天后当天 09:00 私聊门店服务经理和对应督导",
         "local": "http://127.0.0.1:9005",
         "port": 9005,
         "accent": "blue",

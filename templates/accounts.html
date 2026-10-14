@@ -112,7 +112,7 @@
         <div class="ant-form-item-control"><select class="ant-select" id="nl" name="level"><option value="supervisor">督导</option><option value="admin">管理员</option></select></div></div>
     </div>
     <div class="ant-form-item"><span class="ant-form-item-label">可访问系统</span>
-      <div class="ant-form-item-control ant-flex" style="gap:var(--ant-space-2) var(--ant-space-4)">{% for a in app_ids %}<label class="ant-checkbox"><input type="checkbox" name="apps" value="{{ a }}" {% if a in ("report","cleaner") %}checked{% endif %}> {{ app_label[a] }}</label>{% endfor %}</div></div>
+      <div class="ant-form-item-control ant-flex" style="gap:var(--ant-space-2) var(--ant-space-4)">{% for a in app_ids %}<label class="ant-checkbox"><input type="checkbox" name="apps" value="{{ a }}" {% if a in ("report","cleaner","hub") %}checked{% endif %}> {{ app_label[a] }}</label>{% endfor %}</div></div>
     <div class="ant-flex-right"><button class="ant-btn ant-btn-primary" type="submit"><svg class="ai" aria-hidden="true"><use href="#i-plus"/></svg>创建（下一步确认）</button></div>
   </form>
   <p class="muted ant-mt-3" style="margin-bottom:0">初始密码一律由管理员手动设定（系统不自动生成）；新账号和被重置密码的账号首次登录必须修改密码。你不能给自己降权或停用自己，也不能停用 / 降级最后一名管理员。</p>

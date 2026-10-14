@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}猛士服务运营{% endblock %}</title>
+  <link rel="icon" href="/ds/brand/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ds/brand/icon-16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ds/brand/icon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/ds/brand/icon-180.png">
+  <meta name="theme-color" content="#1677ff">
   <style>{{ ds_css()|safe }}</style>
   <style>
     /* ---- hub 专属微调（通用样式一律在 design-system/antd-lite.css） ---- */
@@ -52,13 +57,22 @@
       .hub-user .n { max-width: 96px; }
       .hub-crumb { display: none; }
     }
+    /* 窄屏（390 / 360px）顶栏防挤压：<=480px 隐藏品牌文字只留 logo，
+       用户菜单按钮不再被顶栏标题挤压/重叠 */
+    .brand, .hub-user { flex: none; }
+    @media (max-width: 480px) {
+      .brand { margin-right: 8px; }
+      .brand .brand-name { display: none; }
+      .hub-user > button { padding: 0 10px; }
+      .hub-user .n { max-width: 88px; }
+    }
   </style>
 </head>
 <body>
   {# 本地图标 sprite（Ant Design Icons，MIT） #}
   {{ ds_sprite()|safe }}
   <header class="ant-header"><div class="in">
-    <a class="brand" href="/"><svg class="ai" aria-hidden="true"><use href="#i-appstore"/></svg>猛士服务运营</a>
+    <a class="brand" href="/"><img class="brand-logo" src="/ds/brand/logo-blue.png" srcset="/ds/brand/logo-blue@2x.png 2x" alt="猛士" height="28"><span class="brand-name">猛士服务运营</span></a>
     <span class="hub-crumb">{% block crumb %}控制台黄页{% endblock %}</span>
     {% if mhero_user and mhero_user.via == 'session' %}
     {# 顶栏内建用户下拉（data-mhero-userbar 标记可避免 userbar 注入器重复注入同一功能） #}
