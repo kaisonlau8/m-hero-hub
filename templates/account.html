@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}账号设置 · 猛士服务运营{% endblock %}
+{% block crumb %}账号设置{% endblock %}
+{% block body %}
+<header class="ant-page-header">
+  <div class="ant-page-header-heading">
+    <h1>账号设置</h1>
+    <div class="ant-page-header-sub">查看账号信息、更改登录密码</div>
+  </div>
+  <div class="ant-page-header-actions">
+    <a class="ant-btn" href="/"><svg class="ai" aria-hidden="true"><use href="#i-arrow-left"/></svg>返回黄页</a>
+  </div>
+</header>
+
+{% if msg %}<div class="ant-alert ant-alert-success" id="flash-ok"><span class="ant-alert-icon"><svg class="ai" aria-hidden="true"><use href="#i-check-circle"/></svg></span><div class="ant-alert-content">{{ msg }}</div></div>{% endif %}
+{% if err %}<div class="ant-alert ant-alert-error" id="flash-err"><span class="ant-alert-icon"><svg class="ai" aria-hidden="true"><use href="#i-close-circle"/></svg></span><div class="ant-alert-content">{{ err }}</div></div>{% endif %}
+
+<div class="ant-card" style="max-width:520px">
+  <div class="ant-card-head"><h2 class="ant-card-head-title">基本信息</h2></div>
+  <div class="ant-card-body">
+    <div class="ant-descriptions" style="grid-template-columns:none">
+      <div class="ant-descriptions-item"><span class="ant-descriptions-item-label">姓名</span><span class="ant-descriptions-item-content" id="acc-display">{{ display }}</span></div>
+      <div class="ant-descriptions-item"><span class="ant-descriptions-item-label">账号</span><span class="ant-descriptions-item-content" id="acc-name">{{ name }}</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="ant-card" style="max-width:520px">
+  <div class="ant-card-head"><h2 class="ant-card-head-title">更改密码</h2></div>
+  <div class="ant-card-body">
+  <form method="post" action="/account/password" autocomplete="off">
+    <div class="ant-form-item"><label class="ant-form-item-label" for="pw-old">当前密码</label>
+      <div class="ant-form-item-control"><input class="ant-input" type="password" id="pw-old" name="old" required autocomplete="current-password"></div></div>
+    <div class="ant-form-item"><label class="ant-form-item-label" for="pw-new">新密码</label>
+      <div class="ant-form-item-control"><input class="ant-input" type="password" id="pw-new" name="new" required autocomplete="new-password"></div></div>
+    <div class="ant-form-item"><label class="ant-form-item-label" for="pw-new2">确认新密码</label>
+      <div class="ant-form-item-control"><input class="ant-input" type="password" id="pw-new2" name="new2" required autocomplete="new-password">
+        <div class="ant-form-item-hint">新密码至少 10 位，需同时包含大写字母、小写字母和数字，且不能包含账号。</div></div></div>
+    <button class="ant-btn ant-btn-primary" id="pw-go" type="submit"><svg class="ai" aria-hidden="true"><use href="#i-key"/></svg>修改密码</button>
+  </form>
+  </div>
+</div>
+{% endblock %}
