@@ -9,7 +9,9 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/ds/brand/icon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/ds/brand/icon-180.png">
   <meta name="theme-color" content="#1677ff">
+  <script>document.documentElement.classList.add('ant-booting');</script>
   <style>{{ ds_css()|safe }}</style>
+  <style>{{ ds_feedback_css()|safe }}</style>
   <style>
     /* ---- hub 专属微调（通用样式一律在 design-system/antd-lite.css） ---- */
     /* 顶栏内层与正文 .container 同宽同内边距（桌面 1280 / 24px），左右边缘对齐；
@@ -68,7 +70,11 @@
     }
   </style>
 </head>
-<body>
+<body data-page="{% block page_id %}page{% endblock %}">
+  <div id="ant-page-spin" class="ant-spin ant-spin-lg ant-spin-spinning ant-spin-fullscreen ant-boot-spin" role="status" aria-live="polite" aria-busy="true">
+    {% include "_spin_dots.html" %}
+    <div class="ant-spin-text">{% block spin_tip %}正在加载…{% endblock %}</div>
+  </div>
   {# 本地图标 sprite（Ant Design Icons，MIT） #}
   {{ ds_sprite()|safe }}
   <header class="ant-header"><div class="in">
@@ -110,6 +116,7 @@
   </div>
   {# 移动端表格卡片化（<=768px，桌面端零影响） #}
   <script>{{ ds_cards()|safe }}</script>
+  <script>{{ ds_feedback_js()|safe }}</script>
   {% block tail %}{% endblock %}
 </body>
 </html>
