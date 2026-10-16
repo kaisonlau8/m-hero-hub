@@ -1,0 +1,266 @@
+/* ==========================================================================
+   feedback.css — Ant Design v5 交互反馈（hub 自有，不随 design-system 同步覆盖）
+   --------------------------------------------------------------------------
+   只用 antd-lite 已有 token，不引入新配色、不引入动画库。
+   · Spin（四圆点）· Button loading · Message · Notification
+   · Progress / Upload 列表进度（页面上出现 [data-ant-upload] 时由 feedback.js 挂上）
+   ========================================================================== */
+
+/* ---- Spin ---------------------------------------------------------------- */
+.ant-spin-dot {
+  position: relative;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+}
+.ant-spin-dot-item {
+  position: absolute;
+  display: block;
+  width: 9px;
+  height: 9px;
+  background: var(--ant-primary);
+  border-radius: 50%;
+  transform: scale(.75);
+  transform-origin: 50% 50%;
+  opacity: .3;
+  animation: antSpinMove 1s infinite linear alternate;
+}
+.ant-spin-dot-item:nth-child(1) { top: 0; left: 0; }
+.ant-spin-dot-item:nth-child(2) { top: 0; right: 0; animation-delay: .4s; }
+.ant-spin-dot-item:nth-child(3) { right: 0; bottom: 0; animation-delay: .8s; }
+.ant-spin-dot-item:nth-child(4) { bottom: 0; left: 0; animation-delay: 1.2s; }
+.ant-spin-dot-spin {
+  transform: rotate(45deg);
+  animation: antRotate 1.2s infinite linear;
+}
+.ant-spin-sm .ant-spin-dot { width: 14px; height: 14px; font-size: 14px; }
+.ant-spin-sm .ant-spin-dot-item { width: 6px; height: 6px; }
+.ant-spin-lg .ant-spin-dot { width: 32px; height: 32px; font-size: 32px; }
+.ant-spin-lg .ant-spin-dot-item { width: 14px; height: 14px; }
+.ant-spin-text {
+  color: var(--ant-primary);
+  font-size: var(--ant-font-size-base);
+  line-height: 1.5714;
+}
+
+/* 全屏：首屏加载。默认隐藏，html.ant-booting 时盖住页面（脚本在 head 里加上这个 class） */
+.ant-boot-spin { display: none; }
+html.ant-booting .ant-spin-fullscreen.ant-boot-spin {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, .75);
+}
+html.ant-booting .ant-header,
+html.ant-booting .container {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* 行内小 Spin（状态刷新，不挡住页面） */
+.ant-spin-inline {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+.ant-spin[hidden] { display: none !important; }
+
+@keyframes antSpinMove {
+  to { opacity: 1; }
+}
+@keyframes antRotate {
+  to { transform: rotate(405deg); }
+}
+
+/* ---- Button loading（主色按钮保持蓝底白字，不落到禁用灰） ---------------- */
+.ant-btn-loading-icon {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  line-height: 0;
+}
+.ant-btn-sm .ant-btn-loading-icon { font-size: 12px; }
+.ant-btn-loading > .ai { visibility: hidden; position: absolute; width: 0; height: 0; overflow: hidden; }
+.anticon-spin {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  animation: antIconSpin 1s linear infinite;
+}
+@keyframes antIconSpin {
+  to { transform: rotate(360deg); }
+}
+.ant-btn.ant-btn-loading {
+  position: relative;
+  opacity: .65;
+  cursor: default;
+  pointer-events: none;
+}
+.ant-btn.ant-btn-loading[disabled] {
+  opacity: .65;
+  cursor: default;
+  pointer-events: none;
+  color: var(--ant-color-text);
+  background: var(--ant-color-bg-container);
+  border-color: var(--ant-color-border);
+}
+.ant-btn.ant-btn-primary.ant-btn-loading[disabled] {
+  color: #fff;
+  background: var(--ant-primary);
+  border-color: var(--ant-primary);
+}
+.ant-btn.ant-btn-danger.ant-btn-loading[disabled] {
+  color: #cf1322;
+  background: var(--ant-color-bg-container);
+  border-color: var(--ant-error);
+}
+
+/* ---- Message（顶中、白底、浅阴影） -------------------------------------- */
+.ant-message {
+  position: fixed;
+  top: 8px;
+  left: 0;
+  right: 0;
+  z-index: 2010;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.ant-message-notice {
+  pointer-events: auto;
+  animation: antMsgIn .2s ease;
+}
+.ant-message-notice-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: min(520px, calc(100vw - 32px));
+  padding: 9px 12px;
+  background: #fff;
+  border-radius: var(--ant-radius-lg);
+  box-shadow: var(--ant-shadow-dropdown);
+  font-size: var(--ant-font-size-base);
+  line-height: 1.5714;
+  color: var(--ant-color-text);
+}
+.ant-message-icon { font-size: 16px; line-height: 1; flex: none; margin-top: 2px; }
+.ant-message-icon .ai { width: 16px; height: 16px; }
+.ant-message-success .ant-message-icon { color: var(--ant-success); }
+.ant-message-error .ant-message-icon { color: var(--ant-error); }
+.ant-message-warning .ant-message-icon { color: var(--ant-warning); }
+.ant-message-info .ant-message-icon,
+.ant-message-loading .ant-message-icon { color: var(--ant-primary); }
+.ant-message-text { min-width: 0; }
+
+/* ---- Notification（右上、白底） ----------------------------------------- */
+.ant-notification {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 2050;
+  width: 384px;
+  max-width: calc(100vw - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  pointer-events: none;
+}
+.ant-notification-notice {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 24px;
+  background: #fff;
+  border-radius: var(--ant-radius-lg);
+  box-shadow: var(--ant-shadow-dropdown);
+  animation: antMsgIn .2s ease;
+}
+.ant-notification-notice-icon { font-size: 24px; line-height: 1; flex: none; }
+.ant-notification-notice-icon .ai { width: 24px; height: 24px; }
+.ant-notification-notice-success .ant-notification-notice-icon { color: var(--ant-success); }
+.ant-notification-notice-error .ant-notification-notice-icon { color: var(--ant-error); }
+.ant-notification-notice-warning .ant-notification-notice-icon { color: var(--ant-warning); }
+.ant-notification-notice-info .ant-notification-notice-icon { color: var(--ant-primary); }
+.ant-notification-notice-content { flex: 1; min-width: 0; }
+.ant-notification-notice-message {
+  font-size: var(--ant-font-size-card-title);
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--ant-color-text);
+}
+.ant-notification-notice-description {
+  margin-top: 4px;
+  font-size: var(--ant-font-size-base);
+  line-height: 1.5714;
+  color: var(--ant-color-text);
+}
+.ant-notification-notice-close {
+  flex: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ant-color-text-tertiary);
+  cursor: pointer;
+  line-height: 1;
+  font-size: 14px;
+}
+.ant-notification-notice-close:hover { color: var(--ant-color-text); }
+
+@keyframes antMsgIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Progress + Upload 列表（2px 主色进度条） --------------------------- */
+.ant-progress-line { width: 100%; font-size: var(--ant-font-size-base); }
+.ant-progress-outer { display: block; width: 100%; }
+.ant-progress-inner {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, .06);
+  border-radius: 100px;
+}
+.ant-progress-bg {
+  position: relative;
+  height: 100%;
+  background: var(--ant-primary);
+  border-radius: 100px;
+  transition: width .2s linear;
+}
+.ant-progress-status-success .ant-progress-bg { background: var(--ant-success); }
+.ant-progress-status-exception .ant-progress-bg { background: var(--ant-error); }
+.ant-upload-list { margin-top: 8px; }
+.ant-upload-list-item { margin-top: 8px; font-size: var(--ant-font-size-base); color: var(--ant-color-text); }
+.ant-upload-list-item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.5714;
+}
+.ant-upload-list .ant-progress { margin-top: 4px; line-height: 0; }
+.ant-upload-list .ant-progress-inner { height: 2px; }
+.ant-upload-list-item-error .ant-upload-list-item-name { color: var(--ant-error); }
+
+/* 结果条被脚本收成 toast 后不再占位（无脚本时保持原样） */
+.ant-alert[hidden] { display: none !important; }
+
+@media (max-width: 768px) {
+  .ant-notification { top: 12px; right: 16px; left: 16px; width: auto; max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ant-message-notice,
+  .ant-notification-notice { animation: none; }
+}

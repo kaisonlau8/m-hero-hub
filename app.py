@@ -11,7 +11,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-from flask import Flask, Response, g, jsonify, redirect, render_template, request, send_from_directory
+from flask import Flask, Response, g, jsonify, redirect, render_template, request, send_from_directory, stream_with_context
 
 ROOT = Path(__file__).resolve().parent
 app = Flask(__name__, template_folder=str(ROOT / "templates"))
@@ -29,6 +29,9 @@ def _ds(name: str) -> str:
 app.jinja_env.globals["ds_css"] = lambda: _ds("antd-lite.css")
 app.jinja_env.globals["ds_sprite"] = lambda: _ds("sprite.svg")
 app.jinja_env.globals["ds_cards"] = lambda: _ds("cards.js")
+# hub 自有的 Ant Design 反馈层（不在 design-system 同步清单里）
+app.jinja_env.globals["ds_feedback_css"] = lambda: _ds("feedback.css")
+app.jinja_env.globals["ds_feedback_js"] = lambda: _ds("feedback.js")
 
 
 # --- 品牌静态资源（logo / favicon，design-system/sync.sh 同步到 ds/brand/）---
@@ -164,9 +167,56 @@ def probe_services() -> list[dict]:
     return rows
 
 
+_STREAM = "<!--HUB_STREAM-->"
+
+
+def _streamed_page(template: str, producer, status: int = 200, headers: dict | None = None, **ctx):
+    """先吐出壳子（含全屏 Spin），再跑 producer() 把慢内容插在 <!--HUB_STREAM--> 处。
+
+    direct_passthrough 避免 after_request 把整页缓冲完再下发，浏览器才能在探活 / 拉账号期间看到 Spin。
+    """
+
+    def _b(part: str) -> bytes:
+        return part.encode("utf-8")
+
+    @stream_with_context
+    def generate():
+        html = render_template(template, **ctx)
+        if _STREAM not in html:
+            yield _b(html)
+            return
+        pre, post = html.split(_STREAM, 1)
+        yield _b(pre)
+        try:
+            extra = producer() or ""
+        except Exception:
+            app.logger.exception("stream producer failed")
+            extra = (
+                '<div class="ant-alert ant-alert-error" id="flash-err">'
+                '<span class="ant-alert-icon"><svg class="ai" aria-hidden="true"><use href="#i-close-circle"/></svg></span>'
+                '<div class="ant-alert-content">页面加载失败，请稍后重试</div></div>'
+            )
+        yield _b(extra)
+        yield _b(post)
+
+    resp = Response(generate(), status=status, mimetype="text/html")
+    resp.direct_passthrough = True
+    resp.headers["X-Accel-Buffering"] = "no"
+    for key, value in (headers or {}).items():
+        resp.headers[key] = value
+    return resp
+
+
 @app.get("/")
 def index():
-    return render_template("index.html", services=probe_services())
+    def producer():
+        try:
+            return render_template("index_cards.html", services=probe_services())
+        except Exception:
+            app.logger.exception("probe services failed")
+            return render_template("index_cards.html", services=[], load_err=True)
+
+    return _streamed_page("index.html", producer)
 
 
 # ---------------------------------------------------------------- 账号管理（仅管理员；经 Casdoor 管理 API，凭据只在服务端）
@@ -203,17 +253,20 @@ def _acct_render(msg="", err="", status=200, **extra):
     from mhero_auth.accounts import LEVELS
     from mhero_auth.core import APP_IDS, APP_LABEL
     svc = get_account_service()
-    ctx = dict(configured=svc is not None, rows=[], audit=[], msg=msg, err=err, levels=LEVELS, app_ids=APP_IDS, app_label=APP_LABEL,
+    ctx = dict(configured=svc is not None, rows=[], audit=[], msg=msg, err=err, late_err="", levels=LEVELS, app_ids=APP_IDS, app_label=APP_LABEL,
                actor=_admin_actor().name, require_app=_auth.cfg.require_app, confirm=None)
-    if svc is not None:
-        try:
-            ctx["rows"], ctx["audit"] = svc.snapshot(), svc.recent_audit(30)
-        except Exception as exc:                       # Casdoor down etc: show, do not 500
-            ctx["err"] = ctx["err"] or f"读取账号失败：{exc}"
     ctx.update(extra)
-    resp = Response(render_template("accounts.html", **ctx), status=status, mimetype="text/html")
-    resp.headers["Cache-Control"] = "no-store"
-    return resp
+
+    def producer():
+        if svc is not None:
+            try:
+                ctx["rows"], ctx["audit"] = svc.snapshot(), svc.recent_audit(30)
+            except Exception as exc:                       # Casdoor down etc: show, do not 500
+                if not ctx["err"]:
+                    ctx["late_err"] = f"读取账号失败：{exc}"
+        return render_template("accounts_data.html", **ctx)
+
+    return _streamed_page("accounts.html", producer, status=status, headers={"Cache-Control": "no-store"}, **ctx)
 
 
 @app.get("/admin/accounts")
