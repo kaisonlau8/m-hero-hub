@@ -54,18 +54,15 @@
     .hub-user .dd a .ai { color: var(--ant-color-text-tertiary); }
     .hub-user .dd a:hover { background: rgba(0, 0, 0, .04); text-decoration: none; }
     .hub-user .dd hr { border: 0; border-top: 1px solid var(--ant-color-split); margin: 4px 8px; }
-    @media (max-width: 768px) {
-      .hub-user .dd a { min-height: var(--ant-control-height-mobile); padding: 8px 12px; }
-      .hub-user .n { max-width: 96px; }
-      .hub-crumb { display: none; }
-    }
-    /* 窄屏（390 / 360px）顶栏防挤压：<=480px 隐藏品牌文字只留 logo，
-       用户菜单按钮不再被顶栏标题挤压/重叠 */
+    /* 移动端导航完全交给设计系统（antd-lite.css 4.7 + cards.js）：
+       <=860px .hub-user 按钮变成汉堡、.dd 收成右侧抽屉，断点/动画/遮罩与全站一致。
+       页面脚本只负责桌面下拉的开合，开合的 aria 同步由 cards.js 捕获阶段补齐。 */
+    @media (max-width: 1080px) { .hub-user .n { max-width: 96px; } }
+    @media (max-width: 860px) { .hub-crumb { display: none; } }
+    /* 窄屏（390 / 360px）顶栏防挤压：桌面用户按钮仍在时，<=480px 隐藏品牌文字只留 logo */
     .brand, .hub-user { flex: none; }
     @media (max-width: 480px) {
       .brand { margin-right: 8px; }
-      .brand .brand-name { display: none; }
-      .hub-user > button { padding: 0 10px; }
       .hub-user .n { max-width: 88px; }
     }
   </style>
@@ -81,7 +78,8 @@
     <a class="brand" href="/"><img class="brand-logo" src="/ds/brand/logo-blue.png" srcset="/ds/brand/logo-blue@2x.png 2x" alt="猛士" height="28"><span class="brand-name">猛士服务运营</span></a>
     <span class="hub-crumb">{% block crumb %}控制台黄页{% endblock %}</span>
     {% if mhero_user and mhero_user.via == 'session' %}
-    {# 顶栏内建用户下拉（data-mhero-userbar 标记可避免 userbar 注入器重复注入同一功能） #}
+    {# 顶栏内建用户下拉（data-mhero-userbar 标记可避免 userbar 注入器重复注入同一功能）。
+       桌面端用这个下拉；<=860px 由设计系统把按钮画成汉堡、下拉收成右侧抽屉（antd-lite 4.7）。 #}
     <div class="hub-user" data-mhero-userbar="1">
       <button type="button" aria-haspopup="true" aria-expanded="false">
         <span class="avatar"><svg class="ai" aria-hidden="true"><use href="#i-user"/></svg></span>
@@ -107,14 +105,13 @@
     var t = u.querySelector('button');
     t.addEventListener('click', function (e) { e.stopPropagation(); var o = u.classList.toggle('open'); t.setAttribute('aria-expanded', o ? 'true' : 'false'); });
     document.addEventListener('click', function (e) { if (!u.contains(e.target)) { u.classList.remove('open'); t.setAttribute('aria-expanded', 'false'); } });
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { u.classList.remove('open'); t.setAttribute('aria-expanded', 'false'); } });
   })();
   </script>
   <div class="container">
     {% block body %}{% endblock %}
     {% block footer %}{% endblock %}
   </div>
-  {# 移动端表格卡片化（<=768px，桌面端零影响） #}
+  {# 移动端表格卡片化 + 统一汉堡/抽屉行为（cards.js，<=860px，桌面端零影响） #}
   <script>{{ ds_cards()|safe }}</script>
   <script>{{ ds_feedback_js()|safe }}</script>
   {% block tail %}{% endblock %}
