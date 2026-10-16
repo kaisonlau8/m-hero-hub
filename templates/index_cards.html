@@ -1,0 +1,27 @@
+{% if load_err %}
+<div class="ant-alert ant-alert-error" id="flash-err"><span class="ant-alert-icon"><svg class="ai" aria-hidden="true"><use href="#i-close-circle"/></svg></span><div class="ant-alert-content">服务状态加载失败，请稍后重试</div></div>
+{% elif not services %}
+<div class="ant-card"><div class="ant-card-body">
+  <div class="ant-empty" id="no-apps">
+    <div class="ant-empty-image"><svg class="ai" aria-hidden="true"><use href="#i-inbox"/></svg></div>
+    <div class="ant-empty-title">还没有可用的系统入口</div>
+    <div class="ant-empty-desc">你的账号还没有开通任何系统的访问权限，请联系管理员开通。</div>
+  </div>
+</div></div>
+{% endif %}
+
+<div class="hub-grid" id="grid">
+  {% for s in services %}
+  <div class="card hub-card" data-id="{{ s.id }}">
+    <div class="hub-card-top">
+      <span class="hub-ico t-{{ s.accent }}"><svg class="ai" aria-hidden="true"><use href="#i-{{ s.icon }}"/></svg></span>
+      <span class="ant-tag {{ 'ant-tag-success' if s.online else 'ant-tag-error' }}" data-role="badge" title="本地 :{{ s.port }}">{{ '在线' if s.online else '离线' }}</span>
+    </div>
+    <h3>{{ s.name }}</h3>
+    <p class="hub-desc">{{ s.desc }}</p>
+    <span class="hub-open-wrap" data-role="open-wrap" {% if not s.online %}title="服务离线：暂时无法打开，恢复后自动可用"{% endif %}>
+      <a class="ant-btn ant-btn-primary" href="{{ s.url }}" target="_blank" rel="noopener" data-role="open" {% if not s.online %}disabled aria-disabled="true"{% endif %}><svg class="ai" aria-hidden="true"><use href="#i-export"/></svg>打开</a>
+    </span>
+  </div>
+  {% endfor %}
+</div>
