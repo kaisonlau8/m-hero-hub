@@ -1,123 +1,105 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>猛士服务运营 · 控制台黄页</title>
-  <style>
-    :root {
-      --blue: #3370ff;
-      --orange: #ff8800;
-      --red: #f5222d;
-      --turquoise: #00b578;
-      --purple: #7b61ff;
-      --red-accent: #e34d59;
-      --gray: #8f959e;
-      --bg: #f5f5f5;
-      --card-bg: #fff;
-      --text: #1f2329;
-      --border: #dee0e3;
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg); color: var(--text); line-height: 1.6;
-    }
-    .nav {
-      background: var(--card-bg); border-bottom: 1px solid var(--border);
-      padding: 14px 24px; display: flex; align-items: center; gap: 16px;
-    }
-    .nav h1 { font-size: 18px; font-weight: 600; color: var(--orange); }
-    .nav .sub { margin-left: auto; color: var(--gray); font-size: 13px; }
-    .container { max-width: 960px; margin: 28px auto; padding: 0 16px; }
-    .hero { margin-bottom: 20px; }
-    .hero h2 { font-size: 22px; margin-bottom: 6px; }
-    .hero p { color: var(--gray); font-size: 14px; }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 16px;
-    }
-    .card {
-      background: var(--card-bg); border: 1px solid var(--border);
-      border-radius: 8px; padding: 18px 18px 16px; display: flex; flex-direction: column;
-      min-height: 180px; transition: border-color .15s, box-shadow .15s;
-    }
-    .card:hover { border-color: #c9cdd4; box-shadow: 0 4px 14px rgba(31,35,41,.06); }
-    .card.accent-orange { border-left: 4px solid var(--orange); }
-    .card.accent-blue { border-left: 4px solid var(--blue); }
-    .card.accent-green { border-left: 4px solid var(--turquoise); }
-    .card.accent-purple { border-left: 4px solid var(--purple); }
-    .card.accent-red { border-left: 4px solid var(--red-accent); }
-    .card h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
-    .card p { color: var(--gray); font-size: 13px; flex: 1; margin-bottom: 14px; }
-    .meta { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 12px; color: var(--gray); }
-    .badge {
-      display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;
-    }
-    .badge-green { background: #e8f8ee; color: var(--turquoise); }
-    .badge-red { background: #fff1f0; color: #cf1322; }
-    .btn {
-      display: inline-block; text-align: center; text-decoration: none;
-      padding: 8px 14px; border-radius: 4px; font-size: 14px; background: var(--blue); color: #fff;
-    }
-    .btn:hover { background: #2860e0; }
-    .btn.offline { background: #a0a4ab; pointer-events: none; }
-    footer { text-align: center; padding: 20px; color: var(--gray); font-size: 13px; }
-    code { font-size: 12px; background: #f0f1f2; padding: 1px 5px; border-radius: 3px; }
-  </style>
-</head>
-<body>
-  <nav class="nav">
-    <h1>猛士服务运营</h1>
-    <span style="font-size:14px; color:var(--text);">控制台黄页</span>
-    <span class="sub">本地导航 · :9004</span>
-  </nav>
+{% extends "base.html" %}
+{% block title %}功能控制台入口 · 猛士服务运营{% endblock %}
+{% block body %}
+<style>
+  /* 服务卡片栅格：桌面 3 列 / 平板 2 列 / 手机 1 列 */
+  .hub-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ant-space-4); }
+  @media (max-width: 1080px) { .hub-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 768px) { .hub-grid { grid-template-columns: 1fr; } }
 
-  <div class="container">
-    <div class="hero">
-      <h2>功能控制台入口</h2>
-      <p>汇总事故车、VIP 提醒、区域报表、超时机器人统计等控制台。状态每 10 秒自动刷新。</p>
-    </div>
+  .hub-card { display: flex; flex-direction: column; min-height: 176px; transition: border-color .15s, box-shadow .15s; }
+  .hub-card:hover { border-color: var(--ant-color-border-strong); box-shadow: var(--ant-shadow-dropdown); }
+  .hub-card-top { display: flex; align-items: center; justify-content: space-between; gap: var(--ant-space-2); margin-bottom: var(--ant-space-3); }
+  .hub-card h3 { font-size: var(--ant-font-size-card-title); margin-bottom: var(--ant-space-1); }
+  .hub-card .hub-desc { color: var(--ant-color-text-secondary); font-size: var(--ant-font-size-table); flex: 1; margin-bottom: var(--ant-space-3); line-height: 1.6; }
+  /* 图标底色圆块（按分类着色，不承载在线/离线语义——状态只看 Tag） */
+  .hub-ico {
+    width: 40px; height: 40px; border-radius: 10px; flex: none;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 20px;
+  }
+  .hub-ico .ai { width: 20px; height: 20px; }
+  .hub-ico.t-orange { background: #fff7e6; color: #d46b08; }
+  .hub-ico.t-blue { background: var(--ant-primary-bg); color: var(--ant-primary); }
+  .hub-ico.t-green { background: var(--ant-success-bg); color: #389e0d; }
+  .hub-ico.t-purple { background: #f9f0ff; color: #722ed1; }
+  .hub-ico.t-red { background: var(--ant-error-bg); color: #cf1322; }
+  .hub-open-wrap { display: inline-flex; }
+  .hub-open-wrap .ant-btn { min-width: 96px; }
+  @media (max-width: 768px) { .hub-open-wrap, .hub-open-wrap .ant-btn { width: 100%; } }
+</style>
 
-    <div class="grid" id="grid">
-      {% for s in services %}
-      <div class="card accent-{{ s.accent }}" data-id="{{ s.id }}">
-        <div class="meta">
-          <span class="badge {{ 'badge-green' if s.online else 'badge-red' }}" data-role="badge">
-            {{ '在线' if s.online else '离线' }}
-          </span>
-          <span>本地 :{{ s.port }}</span>
-        </div>
-        <h3>{{ s.name }}</h3>
-        <p>{{ s.desc }}</p>
-        <a class="btn {{ '' if s.online else 'offline' }}" href="{{ s.url }}" target="_blank" rel="noopener" data-role="open">
-          打开控制台
-        </a>
-      </div>
-      {% endfor %}
-    </div>
+<header class="ant-page-header">
+  <div class="ant-page-header-heading">
+    <h1>功能控制台入口</h1>
+    <div class="ant-page-header-sub">事故车、VIP、区域报表、DMS 爬取、超时机器人与 NSS 问卷等控制台汇总</div>
   </div>
+  <div class="ant-page-header-meta">状态每 10 秒自动刷新</div>
+</header>
 
-  <footer>猛士科技 服务运营 · 内部工具导航</footer>
+{% if not services %}
+<div class="ant-card"><div class="ant-card-body">
+  <div class="ant-empty" id="no-apps">
+    <div class="ant-empty-image"><svg class="ai" aria-hidden="true"><use href="#i-inbox"/></svg></div>
+    <div class="ant-empty-title">还没有可用的系统入口</div>
+    <div class="ant-empty-desc">你的账号还没有开通任何系统的访问权限，请联系管理员开通。</div>
+  </div>
+</div></div>
+{% endif %}
 
-  <script>
+<div class="hub-grid" id="grid">
+  {% for s in services %}
+  <div class="card hub-card" data-id="{{ s.id }}">
+    <div class="hub-card-top">
+      <span class="hub-ico t-{{ s.accent }}"><svg class="ai" aria-hidden="true"><use href="#i-{{ s.icon }}"/></svg></span>
+      <span class="ant-tag {{ 'ant-tag-success' if s.online else 'ant-tag-error' }}" data-role="badge" title="本地 :{{ s.port }}">{{ '在线' if s.online else '离线' }}</span>
+    </div>
+    <h3>{{ s.name }}</h3>
+    <p class="hub-desc">{{ s.desc }}</p>
+    <span class="hub-open-wrap" data-role="open-wrap" {% if not s.online %}title="服务离线：暂时无法打开，恢复后自动可用"{% endif %}>
+      <a class="ant-btn ant-btn-primary" href="{{ s.url }}" target="_blank" rel="noopener" data-role="open" {% if not s.online %}disabled aria-disabled="true"{% endif %}><svg class="ai" aria-hidden="true"><use href="#i-export"/></svg>打开</a>
+    </span>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block footer %}
+<footer class="ant-page-footer" style="text-align:center">
+  猛士科技 服务运营 · 内部工具导航{% if mhero_user and mhero_user.role == 'admin' %} · 本地导航 :9004{% endif %}
+</footer>
+{% endblock %}
+
+{% block tail %}
+<script>
   async function refresh() {
     try {
       const r = await fetch('/api/status');
       const d = await r.json();
+      const seen = new Set((d.services || []).map((s) => s.id));
       (d.services || []).forEach((s) => {
         const card = document.querySelector(`.card[data-id="${s.id}"]`);
         if (!card) return;
         const badge = card.querySelector('[data-role="badge"]');
+        const wrap = card.querySelector('[data-role="open-wrap"]');
         const btn = card.querySelector('[data-role="open"]');
-        badge.textContent = s.online ? '在线' : '离线';
-        badge.className = 'badge ' + (s.online ? 'badge-green' : 'badge-red');
-        btn.classList.toggle('offline', !s.online);
+        if (badge) {
+          badge.textContent = s.online ? '在线' : '离线';
+          badge.className = 'ant-tag ' + (s.online ? 'ant-tag-success' : 'ant-tag-error');
+        }
+        if (btn) {
+          if (s.online) { btn.removeAttribute('disabled'); btn.removeAttribute('aria-disabled'); if (wrap) wrap.removeAttribute('title'); }
+          else { btn.setAttribute('disabled', ''); btn.setAttribute('aria-disabled', 'true'); if (wrap) wrap.title = '服务离线：暂时无法打开，恢复后自动可用'; }
+        }
+      });
+      // 权限中途变化：卡片仍在页面但接口不再返回 → 标记「检测中」
+      document.querySelectorAll('.card[data-id]').forEach((card) => {
+        if (!seen.has(card.getAttribute('data-id'))) {
+          const badge = card.querySelector('[data-role="badge"]');
+          if (badge) { badge.textContent = '检测中'; badge.className = 'ant-tag'; }
+        }
       });
     } catch (e) {}
   }
   setInterval(refresh, 10000);
-  </script>
-</body>
-</html>
+</script>
+{% endblock %}

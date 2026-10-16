@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}猛士服务运营{% endblock %}</title>
+  <link rel="icon" href="/ds/brand/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ds/brand/icon-16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ds/brand/icon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/ds/brand/icon-180.png">
+  <meta name="theme-color" content="#1677ff">
+  <style>{{ ds_css()|safe }}</style>
+  <style>
+    /* ---- hub 专属微调（通用样式一律在 design-system/antd-lite.css） ---- */
+    /* 顶栏内层与正文 .container 同宽同内边距（桌面 1280 / 24px），左右边缘对齐；
+       <=640px / <=360px 跟随 .container 收紧到 16 / 12px */
+    .ant-header .in { max-width: 1280px; padding: 0 var(--ant-space-5); }
+    @media (max-width: 640px) { .ant-header .in { padding: 0 var(--ant-space-4); } }
+    @media (max-width: 360px) { .ant-header .in { padding: 0 var(--ant-space-3); } }
+    .hub-crumb { font-size: var(--ant-font-size-table); color: var(--ant-color-text-tertiary); white-space: nowrap; }
+    /* 顶栏右侧用户下拉（Ant Dropdown 规格；独立实现，不依赖 .mi 结构） */
+    .hub-user { position: relative; margin-left: auto; }
+    .hub-user > button {
+      display: inline-flex; align-items: center; gap: 8px;
+      height: 36px; padding: 0 12px;
+      background: var(--ant-color-bg-container); border: 1px solid var(--ant-color-border);
+      border-radius: var(--ant-radius-md); font: inherit; color: var(--ant-color-text); cursor: pointer;
+    }
+    .hub-user > button:hover, .hub-user.open > button { border-color: var(--ant-primary); color: var(--ant-primary); }
+    .hub-user .avatar {
+      width: 22px; height: 22px; border-radius: 50%; flex: none;
+      background: var(--ant-primary-bg); color: var(--ant-primary-active);
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .hub-user .avatar .ai { font-size: 12px; }
+    .hub-user .n { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hub-user .ant-tag { flex: none; }
+    .hub-user .dd-caret { order: 2; color: var(--ant-color-text-tertiary); font-size: 10px; }
+    .hub-user .dd {
+      display: none; position: absolute; right: 0; top: 40px; min-width: 190px;
+      background: var(--ant-color-bg-container); border: 1px solid var(--ant-color-split);
+      border-radius: var(--ant-radius-lg); box-shadow: var(--ant-shadow-dropdown);
+      padding: 4px; z-index: var(--ant-z-dropdown);
+    }
+    .hub-user.open .dd, .hub-user:focus-within .dd { display: block; }
+    @media (hover: hover) { .hub-user:hover .dd { display: block; } }
+    .hub-user .dd a {
+      display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+      padding: 5px 12px; min-height: 32px; border-radius: var(--ant-radius-md);
+      color: var(--ant-color-text); font-size: var(--ant-font-size-base); white-space: nowrap;
+    }
+    .hub-user .dd a .ai { color: var(--ant-color-text-tertiary); }
+    .hub-user .dd a:hover { background: rgba(0, 0, 0, .04); text-decoration: none; }
+    .hub-user .dd hr { border: 0; border-top: 1px solid var(--ant-color-split); margin: 4px 8px; }
+    @media (max-width: 768px) {
+      .hub-user .dd a { min-height: var(--ant-control-height-mobile); padding: 8px 12px; }
+      .hub-user .n { max-width: 96px; }
+      .hub-crumb { display: none; }
+    }
+    /* 窄屏（390 / 360px）顶栏防挤压：<=480px 隐藏品牌文字只留 logo，
+       用户菜单按钮不再被顶栏标题挤压/重叠 */
+    .brand, .hub-user { flex: none; }
+    @media (max-width: 480px) {
+      .brand { margin-right: 8px; }
+      .brand .brand-name { display: none; }
+      .hub-user > button { padding: 0 10px; }
+      .hub-user .n { max-width: 88px; }
+    }
+  </style>
+</head>
+<body>
+  {# 本地图标 sprite（Ant Design Icons，MIT） #}
+  {{ ds_sprite()|safe }}
+  <header class="ant-header"><div class="in">
+    <a class="brand" href="/"><img class="brand-logo" src="/ds/brand/logo-blue.png" srcset="/ds/brand/logo-blue@2x.png 2x" alt="猛士" height="28"><span class="brand-name">猛士服务运营</span></a>
+    <span class="hub-crumb">{% block crumb %}控制台黄页{% endblock %}</span>
+    {% if mhero_user and mhero_user.via == 'session' %}
+    {# 顶栏内建用户下拉（data-mhero-userbar 标记可避免 userbar 注入器重复注入同一功能） #}
+    <div class="hub-user" data-mhero-userbar="1">
+      <button type="button" aria-haspopup="true" aria-expanded="false">
+        <span class="avatar"><svg class="ai" aria-hidden="true"><use href="#i-user"/></svg></span>
+        <span class="n">{{ mhero_user.display or mhero_user.name }}</span>
+        <span class="ant-tag {{ 'ant-tag-processing' if mhero_user.role == 'admin' }}">{{ {'admin': '管理员', 'supervisor': '督导'}.get(mhero_user.role, mhero_user.role) }}</span>
+        <svg class="ai dd-caret" aria-hidden="true"><use href="#i-caret-down"/></svg>
+      </button>
+      <div class="dd" role="menu">
+        <a id="mhero-account-link" href="/account"><svg class="ai" aria-hidden="true"><use href="#i-setting"/></svg>账号设置</a>
+        {% if mhero_user.role == 'admin' and mhero_user.ga %}
+        <a id="accounts-link" href="/admin/accounts"><svg class="ai" aria-hidden="true"><use href="#i-team"/></svg>账号管理</a>
+        {% endif %}
+        <hr>
+        <a id="mhero-logout-link" href="/_auth/logout"><svg class="ai" aria-hidden="true"><use href="#i-logout"/></svg>退出登录</a>
+      </div>
+    </div>
+    {% endif %}
+  </div></header>
+  <script>
+  (function () {
+    var u = document.querySelector('.hub-user');
+    if (!u) return;
+    var t = u.querySelector('button');
+    t.addEventListener('click', function (e) { e.stopPropagation(); var o = u.classList.toggle('open'); t.setAttribute('aria-expanded', o ? 'true' : 'false'); });
+    document.addEventListener('click', function (e) { if (!u.contains(e.target)) { u.classList.remove('open'); t.setAttribute('aria-expanded', 'false'); } });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { u.classList.remove('open'); t.setAttribute('aria-expanded', 'false'); } });
+  })();
+  </script>
+  <div class="container">
+    {% block body %}{% endblock %}
+    {% block footer %}{% endblock %}
+  </div>
+  {# 移动端表格卡片化（<=768px，桌面端零影响） #}
+  <script>{{ ds_cards()|safe }}</script>
+  {% block tail %}{% endblock %}
+</body>
+</html>

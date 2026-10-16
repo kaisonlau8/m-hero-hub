@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}账号管理 · 猛士服务运营{% endblock %}
+{% block crumb %}账号管理{% endblock %}
+{% block body %}
+<style>
+  /* 账号列表：行内编辑的紧凑控件 */
+  .acct-table td { vertical-align: top; }
+  .acct-table .ant-select { min-width: 96px; }
+  .acct-ops form { display: flex; gap: var(--ant-space-2); flex-wrap: wrap; align-items: center; margin: 0; }
+  details.hub-inline { display: inline-block; }
+  details.hub-inline > summary {
+    display: inline-flex; align-items: center; gap: 4px; cursor: pointer; list-style: none;
+    color: #0958d9; font-size: var(--ant-font-size-table); min-height: 28px;
+  }
+  details.hub-inline > summary::-webkit-details-marker { display: none; }
+  details.hub-inline > summary:hover { text-decoration: underline; }
+  details.hub-inline .hub-inline-body { padding: var(--ant-space-2) 0 2px; }
+  .acct-apps-edit { display: flex; flex-wrap: wrap; gap: var(--ant-space-1) var(--ant-space-3); padding: var(--ant-space-2) 0 2px; }
+  .acct-apps-edit .ant-checkbox { min-height: 28px; }
+  .acct-apps-edit .ant-btn { margin-top: var(--ant-space-1); }
+  .pw-reset { display: flex; gap: var(--ant-space-2); flex-wrap: wrap; align-items: center; padding: var(--ant-space-2) 0 2px; }
+  .pw-reset .ant-input { width: 200px; max-width: 100%; }
+  @media (max-width: 768px) {
+    .pw-reset .ant-input, .acct-table .ant-select { width: 100%; }
+    .pw-reset, .acct-ops form { width: 100%; }
+    .acct-table .ant-btn { flex: 1 1 auto; }
+  }
+</style>
+
+<header class="ant-page-header">
+  <div class="ant-page-header-heading">
+    <h1>账号管理</h1>
+    <div class="ant-page-header-sub">新建账号、开通系统、重置密码与停用（经统一账号服务，全部操作两步确认并写入审计）</div>
+    <div class="ant-page-header-meta">当前管理员：{{ actor }}</div>
+  </div>
+  <div class="ant-page-header-actions">
+    <a class="ant-btn" href="/"><svg class="ai" aria-hidden="true"><use href="#i-arrow-left"/></svg>返回黄页</a>
+  </div>
+</header>
+
+{% if msg %}<div class="ant-alert ant-alert-success" id="flash-ok"><span class="ant-alert-icon"><svg class="ai" aria-hidden="true"><use href="#i-check-circle"/></svg></span><div class="ant-alert-content">{{ msg }}</div></div>{% endif %}
+{% if err %}<div class="ant-alert ant-alert-error" id="flash-err"><span class="ant-alert-icon"><svg class="ai" aria-hidden="true"><use href="#i-close-circle"/></svg></span><div class="ant-alert-content">{{ err }}</div></div>{% endif %}
+
+{% if not configured %}
+<div class="ant-card"><div class="ant-card-body">
+  <div class="ant-alert ant-alert-error"><span class="ant-alert-icon"><svg class="ai" aria-hidden="true"><use href="#i-close-circle"/></svg></span><div class="ant-alert-content">账号服务未配置（缺少 MHERO_ADMIN_CRED_FILE / MHERO_ADMIN_API_BASE）。</div></div>
+</div></div>
+{% else %}
+
+{% if confirm %}
+<div class="ant-card ant-alert ant-alert-warning" id="confirm-box">
+  <span class="ant-alert-icon"><svg class="ai" aria-hidden="true"><use href="#i-exclamation-circle"/></svg></span>
+  <div class="ant-alert-content">
+    <div class="ant-alert-title">请确认：{{ confirm.title }}</div>
+    <p>{{ confirm.summary }}</p>
+    <form method="post" action="/admin/accounts/execute" style="margin-top:8px">
+      <input type="hidden" name="action" value="{{ confirm.action }}"><input type="hidden" name="token" value="{{ confirm.token }}">
+      <input type="hidden" name="name" value="{{ confirm.params.name }}"><input type="hidden" name="display" value="{{ confirm.params.display }}">
+      <input type="hidden" name="password" value="{{ confirm.params.password }}"><input type="hidden" name="level" value="{{ confirm.params.level }}">
+      <input type="hidden" name="disabled" value="{{ confirm.params.disabled }}">{% for a in confirm.params.apps %}<input type="hidden" name="apps" value="{{ a }}">{% endfor %}
+      <button class="ant-btn ant-btn-primary" id="confirm-go" type="submit"><svg class="ai" aria-hidden="true"><use href="#i-check"/></svg>确认执行</button>
+      <a class="ant-btn" href="/admin/accounts">取消</a>
+    </form>
+    <p class="muted" style="margin:6px 0 0">确认后立即生效并写入审计记录；5 分钟内有效。</p>
+  </div>
+</div>
+{% endif %}
+
+<div class="ant-card">
+  <div class="ant-card-head"><h2 class="ant-card-head-title">账号列表</h2>
+    <div class="ant-card-extra"><span class="ant-card-head-sub">身份：管理员可进入所有系统；督导只能进入已开通的系统</span></div></div>
+  <div class="ant-card-body">
+  <p class="muted">管理员可进入所有系统并审批 / 管理；督导查看全部数据并提交申请，只能进入下面勾选的系统。{% if not require_app %}（强制开关 MHERO_AUTH_REQUIRE_APP 目前<b>未开启</b>：系统勾选先记录，暂不拦截。）{% endif %}
+  报表系统里督导的负责门店 / 区域，请到「区域报表 → 用户管理」设置，也可以「以某位督导身份」只读预览。</p>
+  <div class="tw ant-table-wrap ant-table-wrap-cards"><table class="ant-table-cards acct-table" id="acct-table"><thead><tr><th data-card-title>账号</th><th>身份</th><th>可访问系统</th><th>状态</th><th>操作</th></tr></thead><tbody>
+  {% for r in rows %}<tr data-user="{{ r.name }}">
+   <td data-label="账号"><b>{{ r.name }}</b><br><span class="muted">{{ r.display }}</span>{% if r.need_update_password %}<br><span class="ant-tag ant-tag-warning">首次登录需改密</span>{% endif %}</td>
+   <td data-label="身份"><form method="post" action="/admin/accounts/prepare"><input type="hidden" name="action" value="set_level"><input type="hidden" name="name" value="{{ r.name }}">
+    <select class="ant-select" name="level" aria-label="身份">{% for k,v in levels.items() %}<option value="{{ k }}" {% if r.level==k %}selected{% endif %}>{{ v }}</option>{% endfor %}{% if not r.level %}<option value="" selected>（无）</option>{% endif %}</select>
+    <button class="ant-btn ant-btn-sm"><svg class="ai" aria-hidden="true"><use href="#i-save"/></svg>保存</button></form></td>
+   <td data-label="可访问系统">
+    {% if r.level=='admin' %}<span class="ant-tag ant-tag-processing">全部系统</span>
+    {% else %}{% if r.apps %}{% for a in r.apps %}<span class="ant-tag">{{ app_label[a] if a in app_label else a }}</span>{% endfor %}{% else %}<span class="muted">未开通</span>{% endif %}{% endif %}
+    <details class="hub-inline"><summary><svg class="ai" aria-hidden="true"><use href="#i-edit"/></svg>编辑权限</summary>
+     <form method="post" action="/admin/accounts/prepare"><input type="hidden" name="action" value="set_apps"><input type="hidden" name="name" value="{{ r.name }}">
+      {% if r.level=='admin' %}<span class="muted">管理员可进入全部系统</span>{% endif %}
+      <div class="acct-apps-edit">{% for a in app_ids %}<label class="ant-checkbox"><input type="checkbox" name="apps" value="{{ a }}" {% if a in r.apps %}checked{% endif %}> {{ app_label[a] }}</label>{% endfor %}
+       <button class="ant-btn ant-btn-sm" type="submit"><svg class="ai" aria-hidden="true"><use href="#i-save"/></svg>保存</button></div></form></details></td>
+   <td data-label="状态">{% if r.disabled %}<span class="ant-tag ant-tag-error">已停用</span>{% else %}<span class="ant-tag ant-tag-success">正常</span>{% endif %}</td>
+   <td data-label="操作" class="acct-ops">
+    <form method="post" action="/admin/accounts/prepare"><input type="hidden" name="action" value="set_disabled"><input type="hidden" name="name" value="{{ r.name }}"><input type="hidden" name="disabled" value="{{ '' if r.disabled else '1' }}">
+     <button class="ant-btn ant-btn-sm {{ '' if r.disabled else 'ant-btn-danger' }}" {% if r.name==actor and not r.disabled %}disabled title="不能停用自己"{% endif %}>{{ '启用' if r.disabled else '停用' }}</button></form>
+    <details class="hub-inline"><summary><svg class="ai" aria-hidden="true"><use href="#i-key"/></svg>重置密码</summary>
+     <form method="post" action="/admin/accounts/prepare" autocomplete="off"><input type="hidden" name="action" value="reset_password"><input type="hidden" name="name" value="{{ r.name }}">
+      <div class="pw-reset"><input class="ant-input" type="password" name="password" placeholder="新密码（管理员设定）" autocomplete="new-password" minlength="10" required>
+       <button class="ant-btn ant-btn-sm" type="submit"><svg class="ai" aria-hidden="true"><use href="#i-key"/></svg>重置</button></div></form></details></td>
+  </tr>{% endfor %}</tbody></table></div></div>
+</div>
+
+<div class="ant-card">
+  <div class="ant-card-head"><h2 class="ant-card-head-title">新建账号</h2></div>
+  <div class="ant-card-body">
+  <form method="post" action="/admin/accounts/prepare" autocomplete="off" id="create-form"><input type="hidden" name="action" value="create">
+    <div class="ant-form-row">
+      <div class="ant-form-item"><label class="ant-form-item-label" for="na">用户名</label>
+        <div class="ant-form-item-control"><input class="ant-input" id="na" name="name" placeholder="手机号，或小写字母开头" required pattern="[a-z][a-z0-9._\-]{2,31}|1[3-9][0-9]{9}"></div></div>
+      <div class="ant-form-item"><label class="ant-form-item-label" for="nd">显示名</label>
+        <div class="ant-form-item-control"><input class="ant-input" id="nd" name="display" placeholder="显示名 / 姓名"></div></div>
+      <div class="ant-form-item"><label class="ant-form-item-label" for="np">初始密码</label>
+        <div class="ant-form-item-control"><input class="ant-input" id="np" type="password" name="password" placeholder="≥10 位，含大小写字母 + 数字" autocomplete="new-password" minlength="10" required></div></div>
+      <div class="ant-form-item"><label class="ant-form-item-label" for="nl">身份</label>
+        <div class="ant-form-item-control"><select class="ant-select" id="nl" name="level"><option value="supervisor">督导</option><option value="admin">管理员</option></select></div></div>
+    </div>
+    <div class="ant-form-item"><span class="ant-form-item-label">可访问系统</span>
+      <div class="ant-form-item-control ant-flex" style="gap:var(--ant-space-2) var(--ant-space-4)">{% for a in app_ids %}<label class="ant-checkbox"><input type="checkbox" name="apps" value="{{ a }}" {% if a in ("report","cleaner","hub") %}checked{% endif %}> {{ app_label[a] }}</label>{% endfor %}</div></div>
+    <div class="ant-flex-right"><button class="ant-btn ant-btn-primary" type="submit"><svg class="ai" aria-hidden="true"><use href="#i-plus"/></svg>创建（下一步确认）</button></div>
+  </form>
+  <p class="muted ant-mt-3" style="margin-bottom:0">初始密码一律由管理员手动设定（系统不自动生成）；新账号和被重置密码的账号首次登录必须修改密码。你不能给自己降权或停用自己，也不能停用 / 降级最后一名管理员。</p>
+  </div>
+</div>
+
+<div class="ant-card">
+  <div class="ant-card-head"><h2 class="ant-card-head-title">最近操作记录</h2></div>
+  <div class="ant-card-body">
+  <div class="tw ant-table-wrap"><table class="ant-table ant-table-small ant-table-cards"><thead><tr><th data-card-title>时间</th><th>操作者</th><th>动作</th><th>对象</th><th>详情</th></tr></thead><tbody>
+  {% for a in audit %}<tr><td data-label="时间">{{ a.ts }}</td><td data-label="操作者">{{ a.actor }}</td><td data-label="动作">{{ a.action }}{% if not a.ok %} <span class="ant-tag ant-tag-error">失败</span>{% endif %}</td><td data-label="对象">{{ a.target }}</td><td data-label="详情">{{ a.detail }}</td></tr>{% endfor %}</tbody></table></div></div>
+</div>
+{% endif %}
+{% endblock %}

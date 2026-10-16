@@ -3,6 +3,5 @@
   "vip": "https://YOUR_PUBLIC_HOST_FOR_VIP",
   "district": "https://YOUR_PUBLIC_HOST_FOR_DISTRICT",
   "cleaner": "https://YOUR_PUBLIC_HOST_FOR_CLEANER",
-  "nss": "https://YOUR_PUBLIC_HOST_FOR_NSS",
-  "assistant-app": "https://YOUR_PUBLIC_HOST_FOR_ASSISTANT_APP"
+  "nss": "https://YOUR_PUBLIC_HOST_FOR_NSS"
 }
