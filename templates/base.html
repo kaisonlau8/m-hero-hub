@@ -59,14 +59,159 @@
       .hub-user .n { max-width: 96px; }
       .hub-crumb { display: none; }
     }
-    /* 窄屏（390 / 360px）顶栏防挤压：<=480px 隐藏品牌文字只留 logo，
-       用户菜单按钮不再被顶栏标题挤压/重叠 */
-    .brand, .hub-user { flex: none; }
+    /* 窄屏（390 / 360px）顶栏防挤压：桌面用户按钮仍在时，<=480px 隐藏品牌文字只留 logo */
+    .brand, .hub-user, .hub-burger { flex: none; }
     @media (max-width: 480px) {
       .brand { margin-right: 8px; }
-      .brand .brand-name { display: none; }
       .hub-user > button { padding: 0 10px; }
       .hub-user .n { max-width: 88px; }
+    }
+
+    /* 移动端导航：<=768px 用汉堡打开右侧抽屉；>=769px 不展示，桌面仍是用户下拉。
+       进场与退场都走 CSS transition（遮罩 opacity、面板 translateX），时长 0.3s。
+       关闭时 visibility 延迟 0.3s，退场播完再从可访问性树拿掉。
+       prefers-reduced-motion: reduce 时取消过渡。 */
+    .hub-burger, .hub-drawer { display: none; }
+    button.hub-burger {
+      position: relative;
+      margin-left: auto;
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      border: 1px solid var(--ant-color-border);
+      background: var(--ant-color-bg-container);
+      color: var(--ant-primary);
+      border-radius: var(--ant-radius-md);
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+    }
+    .hub-burger:hover, .hub-burger[aria-expanded="true"] {
+      border-color: var(--ant-primary);
+      background: var(--ant-primary-bg);
+      color: var(--ant-primary-active);
+    }
+    .hub-burger .ai {
+      position: absolute;
+      font-size: 18px;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+    .hub-burger .hub-burger-close { opacity: 0; transform: rotate(-90deg) scale(.7); }
+    .hub-burger[aria-expanded="true"] .hub-burger-menu { opacity: 0; transform: rotate(90deg) scale(.7); }
+    .hub-burger[aria-expanded="true"] .hub-burger-close { opacity: 1; transform: none; }
+    .hub-drawer-mask, .hub-drawer-panel { position: absolute; }
+    .hub-drawer-mask {
+      inset: 0;
+      background: rgba(0, 0, 0, .45);
+      opacity: 0;
+      transition: opacity .3s ease;
+    }
+    .hub-drawer-panel {
+      top: 0; right: 0; bottom: 0;
+      width: min(300px, calc(100vw - 48px));
+      background: var(--ant-color-bg-container);
+      color: var(--ant-color-text);
+      border-left: 1px solid var(--ant-color-split);
+      box-shadow: var(--ant-shadow-dropdown);
+      transform: translateX(100%);
+      transition: transform .3s cubic-bezier(0.23, 1, 0.32, 1);
+      display: flex;
+      flex-direction: column;
+      outline: none;
+    }
+    .hub-drawer-panel::before {
+      content: "";
+      display: block;
+      height: 3px;
+      background: var(--ant-primary);
+      flex: none;
+    }
+    .hub-drawer-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 12px 12px 16px;
+      border-bottom: 1px solid var(--ant-color-split);
+    }
+    .hub-drawer-who { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+    .hub-drawer-avatar {
+      width: 32px; height: 32px; border-radius: 50%; flex: none;
+      background: var(--ant-primary-bg); color: var(--ant-primary-active);
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .hub-drawer-avatar .ai { font-size: 16px; }
+    .hub-drawer-id { min-width: 0; }
+    .hub-drawer-name {
+      font-size: 14px; font-weight: 600; line-height: 1.4;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    button.hub-drawer-close {
+      width: 44px; height: 44px; flex: none;
+      border: 1px solid var(--ant-color-border);
+      background: #fff; color: var(--ant-primary);
+      border-radius: var(--ant-radius-md); cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    button.hub-drawer-close:hover { border-color: var(--ant-primary); background: var(--ant-primary-bg); }
+    button.hub-drawer-close .ai { font-size: 16px; }
+    .hub-drawer-nav { display: flex; flex-direction: column; padding: 8px; gap: 4px; overflow: auto; }
+    .hub-drawer-nav a {
+      display: flex; align-items: center; gap: 8px;
+      min-height: 44px; padding: 8px 12px;
+      border-radius: var(--ant-radius-md);
+      color: var(--ant-color-text); font-size: 14px;
+    }
+    .hub-drawer-nav a .ai { color: var(--ant-primary); font-size: 16px; }
+    .hub-drawer-nav a:hover {
+      background: var(--ant-primary-bg); color: var(--ant-primary-active); text-decoration: none;
+    }
+    .hub-drawer-nav hr { border: 0; border-top: 1px solid var(--ant-color-split); margin: 4px 8px; }
+    /* 设计系统 cards.js 在 <=860px 给「顶栏里的 nav」插入 .burger 并加上 .has-burger。
+       黄页已有 #hub-burger 时不要第二只。antd-lite 4.7 还会把 .hub-user 按钮画成汉堡，
+       自定义汉堡出现的窄屏里同样藏掉。 */
+    @media (max-width: 860px) {
+      .ant-header[data-no-auto-burger] > .in > .burger,
+      .ant-header:has(#hub-burger) > .in > .burger {
+        display: none !important;
+      }
+      .ant-header[data-no-auto-burger].has-burger > .in > nav,
+      .ant-header:has(#hub-burger).has-burger > .in > nav {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        transform: none !important;
+      }
+    }
+    @media (max-width: 768px) {
+      .ant-header[data-no-auto-burger] .hub-user,
+      .ant-header:has(#hub-burger) .hub-user,
+      .hub-user { display: none !important; }
+      .brand .brand-name { display: inline; }
+      button.hub-burger { display: inline-flex; height: 44px; }
+      .hub-drawer {
+        display: block;
+        position: fixed;
+        z-index: 20;
+        top: var(--ant-header-height);
+        right: 0; bottom: 0; left: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: visibility 0s linear .3s;
+      }
+      .hub-drawer.is-open {
+        visibility: visible;
+        pointer-events: auto;
+        transition: visibility 0s linear 0s;
+      }
+      .hub-drawer.is-open .hub-drawer-mask { opacity: 1; }
+      .hub-drawer.is-open .hub-drawer-panel { transform: translateX(0); }
+      body.hub-drawer-open { overflow: hidden; }
+    }
+    @media (min-width: 769px) {
+      .hub-burger, .hub-drawer { display: none !important; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .hub-burger .ai, .hub-drawer, .hub-drawer-mask, .hub-drawer-panel { transition: none; }
     }
   </style>
 </head>
@@ -77,11 +222,12 @@
   </div>
   {# 本地图标 sprite（Ant Design Icons，MIT） #}
   {{ ds_sprite()|safe }}
-  <header class="ant-header"><div class="in">
+  <header class="ant-header"{% if mhero_user and mhero_user.via == 'session' %} data-no-auto-burger{% endif %}><div class="in">
     <a class="brand" href="/"><img class="brand-logo" src="/ds/brand/logo-blue.png" srcset="/ds/brand/logo-blue@2x.png 2x" alt="猛士" height="28"><span class="brand-name">猛士服务运营</span></a>
     <span class="hub-crumb">{% block crumb %}控制台黄页{% endblock %}</span>
     {% if mhero_user and mhero_user.via == 'session' %}
-    {# 顶栏内建用户下拉（data-mhero-userbar 标记可避免 userbar 注入器重复注入同一功能） #}
+    {# 顶栏内建用户下拉（data-mhero-userbar 标记可避免 userbar 注入器重复注入同一功能）。
+       桌面端用这个下拉；<=768px 隐藏，改由汉堡抽屉承接同样的账号入口。 #}
     <div class="hub-user" data-mhero-userbar="1">
       <button type="button" aria-haspopup="true" aria-expanded="false">
         <span class="avatar"><svg class="ai" aria-hidden="true"><use href="#i-user"/></svg></span>
@@ -98,16 +244,94 @@
         <a id="mhero-logout-link" href="/_auth/logout"><svg class="ai" aria-hidden="true"><use href="#i-logout"/></svg>退出登录</a>
       </div>
     </div>
+    <button type="button" class="hub-burger" id="hub-burger" aria-haspopup="dialog" aria-expanded="false" aria-controls="hub-drawer" aria-label="打开导航菜单">
+      <svg class="ai hub-burger-menu" aria-hidden="true"><use href="#i-menu"/></svg>
+      <svg class="ai hub-burger-close" aria-hidden="true"><use href="#i-close"/></svg>
+    </button>
     {% endif %}
   </div></header>
+  {% if mhero_user and mhero_user.via == 'session' %}
+  <div id="hub-drawer" class="hub-drawer" aria-hidden="true" inert>
+    <div class="hub-drawer-mask" data-hub-drawer-close></div>
+    <div class="hub-drawer-panel" role="dialog" aria-modal="true" aria-labelledby="hub-drawer-title">
+      <div class="hub-drawer-head">
+        <div class="hub-drawer-who">
+          <span class="hub-drawer-avatar"><svg class="ai" aria-hidden="true"><use href="#i-user"/></svg></span>
+          <div class="hub-drawer-id">
+            <div class="hub-drawer-name" id="hub-drawer-title">{{ mhero_user.display or mhero_user.name }}</div>
+            <span class="ant-tag {{ 'ant-tag-processing' if mhero_user.role == 'admin' }}">{{ {'admin': '管理员', 'supervisor': '督导'}.get(mhero_user.role, mhero_user.role) }}</span>
+          </div>
+        </div>
+        <button type="button" class="hub-drawer-close" data-hub-drawer-close aria-label="关闭导航菜单">
+          <svg class="ai" aria-hidden="true"><use href="#i-close"/></svg>
+        </button>
+      </div>
+      <nav class="hub-drawer-nav" aria-label="账户导航">
+        <a id="hub-drawer-account" href="/account"><svg class="ai" aria-hidden="true"><use href="#i-setting"/></svg>账号设置</a>
+        {% if mhero_user.role == 'admin' and mhero_user.ga %}
+        <a id="hub-drawer-accounts" href="/admin/accounts"><svg class="ai" aria-hidden="true"><use href="#i-team"/></svg>账号管理</a>
+        {% endif %}
+        <hr>
+        <a id="hub-drawer-logout" href="/_auth/logout"><svg class="ai" aria-hidden="true"><use href="#i-logout"/></svg>退出登录</a>
+      </nav>
+    </div>
+  </div>
+  {% endif %}
   <script>
   (function () {
     var u = document.querySelector('.hub-user');
-    if (!u) return;
-    var t = u.querySelector('button');
-    t.addEventListener('click', function (e) { e.stopPropagation(); var o = u.classList.toggle('open'); t.setAttribute('aria-expanded', o ? 'true' : 'false'); });
-    document.addEventListener('click', function (e) { if (!u.contains(e.target)) { u.classList.remove('open'); t.setAttribute('aria-expanded', 'false'); } });
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { u.classList.remove('open'); t.setAttribute('aria-expanded', 'false'); } });
+    if (u) {
+      var t = u.querySelector('button');
+      t.addEventListener('click', function (e) { e.stopPropagation(); var o = u.classList.toggle('open'); t.setAttribute('aria-expanded', o ? 'true' : 'false'); });
+      document.addEventListener('click', function (e) { if (!u.contains(e.target)) { u.classList.remove('open'); t.setAttribute('aria-expanded', 'false'); } });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { u.classList.remove('open'); t.setAttribute('aria-expanded', 'false'); } });
+    }
+    var burger = document.getElementById('hub-burger');
+    var drawer = document.getElementById('hub-drawer');
+    if (!burger || !drawer) return;
+    var mq = window.matchMedia('(max-width: 768px)');
+    function setOpen(open) {
+      if (open) drawer.removeAttribute('inert');
+      drawer.classList.toggle('is-open', open);
+      burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      burger.setAttribute('aria-label', open ? '关闭导航菜单' : '打开导航菜单');
+      drawer.setAttribute('aria-hidden', open ? 'false' : 'true');
+      document.body.classList.toggle('hub-drawer-open', open);
+      if (open) {
+        var closeBtn = drawer.querySelector('.hub-drawer-close');
+        if (closeBtn) closeBtn.focus();
+      } else {
+        drawer.setAttribute('inert', '');
+      }
+    }
+    burger.addEventListener('click', function () {
+      var open = burger.getAttribute('aria-expanded') !== 'true';
+      setOpen(open);
+    });
+    drawer.addEventListener('click', function (e) {
+      if (e.target.closest('[data-hub-drawer-close]')) {
+        setOpen(false);
+        if (mq.matches) burger.focus();
+      }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (!drawer.classList.contains('is-open')) return;
+      if (e.key === 'Escape') {
+        setOpen(false);
+        if (mq.matches) burger.focus();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      var nodes = drawer.querySelectorAll('a, button');
+      if (!nodes.length) return;
+      var first = nodes[0];
+      var last = nodes[nodes.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+    function onMq(ev) { if (!ev.matches) setOpen(false); }
+    if (mq.addEventListener) mq.addEventListener('change', onMq);
+    else if (mq.addListener) mq.addListener(onMq);
   })();
   </script>
   <div class="container">
@@ -116,6 +340,29 @@
   </div>
   {# 移动端表格卡片化（<=768px，桌面端零影响） #}
   <script>{{ ds_cards()|safe }}</script>
+  <script>
+  /* 设计系统若已插入 .burger / .has-burger，自定义 #hub-burger 存在时拆掉。
+     放在 ds_cards() 之后，DOMContentLoaded 回调晚于 cards.js 里的自动插入。 */
+  (function () {
+    function disarmAutoBurger() {
+      var headers = document.querySelectorAll('header.ant-header');
+      [].forEach.call(headers, function (header) {
+        if (!header.hasAttribute('data-no-auto-burger') && !header.querySelector('#hub-burger')) return;
+        [].forEach.call(header.querySelectorAll('.burger'), function (btn) {
+          if (btn.id === 'hub-burger') return;
+          if (btn.parentNode) btn.parentNode.removeChild(btn);
+        });
+        header.classList.remove('has-burger');
+        header.classList.remove('nav-ready');
+        if (header.classList.contains('open') && !header.querySelector('.menu, .ant-menu')) {
+          header.classList.remove('open');
+        }
+      });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', disarmAutoBurger);
+    else disarmAutoBurger();
+  })();
+  </script>
   <script>{{ ds_feedback_js()|safe }}</script>
   {% block tail %}{% endblock %}
 </body>
