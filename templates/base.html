@@ -166,8 +166,26 @@
       background: var(--ant-primary-bg); color: var(--ant-primary-active); text-decoration: none;
     }
     .hub-drawer-nav hr { border: 0; border-top: 1px solid var(--ant-color-split); margin: 4px 8px; }
+    /* 设计系统 cards.js 在 <=860px 给「顶栏里的 nav」插入 .burger 并加上 .has-burger。
+       黄页已有 #hub-burger 时不要第二只。antd-lite 4.7 还会把 .hub-user 按钮画成汉堡，
+       自定义汉堡出现的窄屏里同样藏掉。 */
+    @media (max-width: 860px) {
+      .ant-header[data-no-auto-burger] > .in > .burger,
+      .ant-header:has(#hub-burger) > .in > .burger {
+        display: none !important;
+      }
+      .ant-header[data-no-auto-burger].has-burger > .in > nav,
+      .ant-header:has(#hub-burger).has-burger > .in > nav {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        transform: none !important;
+      }
+    }
     @media (max-width: 768px) {
-      .hub-user { display: none; }
+      .ant-header[data-no-auto-burger] .hub-user,
+      .ant-header:has(#hub-burger) .hub-user,
+      .hub-user { display: none !important; }
       .brand .brand-name { display: inline; }
       button.hub-burger { display: inline-flex; height: 44px; }
       .hub-drawer {
@@ -204,7 +222,7 @@
   </div>
   {# 本地图标 sprite（Ant Design Icons，MIT） #}
   {{ ds_sprite()|safe }}
-  <header class="ant-header"><div class="in">
+  <header class="ant-header"{% if mhero_user and mhero_user.via == 'session' %} data-no-auto-burger{% endif %}><div class="in">
     <a class="brand" href="/"><img class="brand-logo" src="/ds/brand/logo-blue.png" srcset="/ds/brand/logo-blue@2x.png 2x" alt="猛士" height="28"><span class="brand-name">猛士服务运营</span></a>
     <span class="hub-crumb">{% block crumb %}控制台黄页{% endblock %}</span>
     {% if mhero_user and mhero_user.via == 'session' %}
@@ -322,6 +340,29 @@
   </div>
   {# 移动端表格卡片化（<=768px，桌面端零影响） #}
   <script>{{ ds_cards()|safe }}</script>
+  <script>
+  /* 设计系统若已插入 .burger / .has-burger，自定义 #hub-burger 存在时拆掉。
+     放在 ds_cards() 之后，DOMContentLoaded 回调晚于 cards.js 里的自动插入。 */
+  (function () {
+    function disarmAutoBurger() {
+      var headers = document.querySelectorAll('header.ant-header');
+      [].forEach.call(headers, function (header) {
+        if (!header.hasAttribute('data-no-auto-burger') && !header.querySelector('#hub-burger')) return;
+        [].forEach.call(header.querySelectorAll('.burger'), function (btn) {
+          if (btn.id === 'hub-burger') return;
+          if (btn.parentNode) btn.parentNode.removeChild(btn);
+        });
+        header.classList.remove('has-burger');
+        header.classList.remove('nav-ready');
+        if (header.classList.contains('open') && !header.querySelector('.menu, .ant-menu')) {
+          header.classList.remove('open');
+        }
+      });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', disarmAutoBurger);
+    else disarmAutoBurger();
+  })();
+  </script>
   <script>{{ ds_feedback_js()|safe }}</script>
   {% block tail %}{% endblock %}
 </body>

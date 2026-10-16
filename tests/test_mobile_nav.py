@@ -30,6 +30,9 @@ def test_admin_drawer_reaches_account_admin_logout(monkeypatch):
     module = load_app(monkeypatch, auth="on")
     html = _account_html(module, _sign(module))
     assert 'id="hub-burger"' in html
+    assert '<header class="ant-header" data-no-auto-burger>' in html
+    assert '.ant-header:has(#hub-burger) > .in > .burger' in html
+    assert 'disarmAutoBurger' in html
     assert 'aria-controls="hub-drawer"' in html
     assert 'aria-label="打开导航菜单"' in html
     assert 'id="hub-drawer"' in html
@@ -73,3 +76,4 @@ def test_anonymous_page_has_no_hamburger(monkeypatch):
     html = page.get_data(as_text=True)
     assert 'id="hub-burger"' not in html
     assert 'id="hub-drawer"' not in html
+    assert '<header class="ant-header" data-no-auto-burger>' not in html
