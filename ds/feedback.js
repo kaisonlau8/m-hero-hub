@@ -179,10 +179,12 @@
   }
 
   function bindLogout() {
-    var link = document.getElementById('mhero-logout-link');
-    if (!link) return;
-    link.addEventListener('click', function () {
-      message.loading('正在退出登录…', 0, 'logout');
+    // 桌面下拉与移动端抽屉各有一处退出入口，都要弹出「正在退出登录」
+    var links = document.querySelectorAll('#mhero-logout-link, #hub-drawer-logout');
+    [].forEach.call(links, function (link) {
+      link.addEventListener('click', function () {
+        message.loading('正在退出登录…', 0, 'logout');
+      });
     });
   }
 
