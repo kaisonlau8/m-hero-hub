@@ -39,9 +39,17 @@ app.jinja_env.globals["ds_feedback_js"] = lambda: _ds("feedback.js")
 def ds_brand(name: str):
     return send_from_directory(str(ROOT / "ds" / "brand"), name)
 
+
+@app.get("/favicon.ico")
+def favicon_ico():
+    """Browsers probe /favicon.ico even when the HTML link points at /ds/brand/... .
+    Must stay public so it never triggers /_auth/login (that overwrites the OAuth state cookie)."""
+    return send_from_directory(str(ROOT / "ds" / "brand"), "favicon.ico")
+
+
 # --- m-hero SSO (Casdoor): inert unless MHERO_AUTH[_HUB]=audit|on is set (see docs/SSO_CASDOOR.md) ---
 from mhero_auth.flask_adapter import init_app as _mhero_auth_init
-_auth = _mhero_auth_init(app, "hub", default_mode="off", public_get_paths=["/healthz", "/ds/brand/*"], admin_paths=["/admin/*"], supervisor_write_paths=["/account/password"], userbar=True, userbar_account_url="/account", userbar_accounts_url="/admin/accounts")   # top-right user bar: 账号设置 + 退出登录
+_auth = _mhero_auth_init(app, "hub", default_mode="off", public_get_paths=["/healthz", "/ds/brand/*", "/favicon.ico"], admin_paths=["/admin/*"], supervisor_write_paths=["/account/password"], userbar=True, userbar_account_url="/account", userbar_accounts_url="/admin/accounts")   # top-right user bar: 账号设置 + 退出登录
 
 # 默认只写本地入口；公网 URL 放在未入库的 config/services.local.json
 _SERVICE_DEFS = [
