@@ -136,8 +136,9 @@ html.ant-booting .container {
 }
 .ant-message-notice {
   pointer-events: auto;
-  animation: antMsgIn .2s ease;
+  animation: antMsgIn .2s cubic-bezier(.23, 1, .32, 1);
 }
+.ant-message-notice-leave { animation: antMsgOut .2s ease-in forwards; }
 .ant-message-notice-content {
   display: flex;
   align-items: flex-start;
@@ -182,8 +183,9 @@ html.ant-booting .container {
   background: #fff;
   border-radius: var(--ant-radius-lg);
   box-shadow: var(--ant-shadow-dropdown);
-  animation: antMsgIn .2s ease;
+  animation: antNoticeIn .2s cubic-bezier(.23, 1, .32, 1);
 }
+.ant-notification-notice-leave { animation: antNoticeOut .2s ease-in forwards; }
 .ant-notification-notice-icon { font-size: 24px; line-height: 1; flex: none; }
 .ant-notification-notice-icon .ai { width: 24px; height: 24px; }
 .ant-notification-notice-success .ant-notification-notice-icon { color: var(--ant-success); }
@@ -217,8 +219,20 @@ html.ant-booting .container {
 .ant-notification-notice-close:hover { color: var(--ant-color-text); }
 
 @keyframes antMsgIn {
-  from { opacity: 0; transform: translateY(-8px); }
+  from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+@keyframes antMsgOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-10px); }
+}
+@keyframes antNoticeIn {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes antNoticeOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(16px); }
 }
 
 /* ---- Progress + Upload 列表（2px 主色进度条） --------------------------- */
@@ -261,6 +275,6 @@ html.ant-booting .container {
   .ant-notification { top: 12px; right: 16px; left: 16px; width: auto; max-width: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ant-message-notice,
-  .ant-notification-notice { animation: none; }
+  .ant-message-notice, .ant-message-notice-leave,
+  .ant-notification-notice, .ant-notification-notice-leave { animation: none; }
 }
