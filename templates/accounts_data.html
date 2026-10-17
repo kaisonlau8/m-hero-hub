@@ -75,6 +75,6 @@
 <div class="ant-card">
   <div class="ant-card-head"><h2 class="ant-card-head-title">最近操作记录</h2></div>
   <div class="ant-card-body">
-  <div class="tw ant-table-wrap"><table class="ant-table ant-table-small ant-table-cards"><thead><tr><th data-card-title>时间</th><th>操作者</th><th>动作</th><th>对象</th><th>详情</th></tr></thead><tbody>
+  <div class="tw ant-table-wrap ds-collapse" data-ds-title="最近操作记录"><table class="ant-table ant-table-small ant-table-cards"><thead><tr><th data-card-title>时间</th><th>操作者</th><th>动作</th><th>对象</th><th>详情</th></tr></thead><tbody>
   {% for a in audit %}<tr><td data-label="时间">{{ a.ts }}</td><td data-label="操作者">{{ a.actor }}</td><td data-label="动作">{{ a.action }}{% if not a.ok %} <span class="ant-tag ant-tag-error">失败</span>{% endif %}</td><td data-label="对象">{{ a.target }}</td><td data-label="详情">{{ a.detail }}</td></tr>{% endfor %}</tbody></table></div></div>
 </div>
