@@ -117,6 +117,16 @@ _SERVICE_DEFS = [
         "accent": "blue",
         "health": "/healthz",
     },
+    {
+        "id": "ykyd",
+        "icon": "solution",
+        "name": "一客一档",
+        "desc": "客户档案：车主与车辆、到店与服务记录查询",
+        "local": "http://127.0.0.1:9011",
+        "port": 9011,
+        "accent": "blue",
+        "health": "/healthz",
+    },
 ]
 
 

@@ -43,7 +43,8 @@ def test_stores_probe_uses_healthz(monkeypatch):
     stores = next(r for r in rows if r["id"] == "stores")
     assert stores["online"] is True
     # 有专用健康检查时不因端口监听而短路，必须探 /healthz
-    assert calls == ["http://127.0.0.1:9014/healthz"]
+    assert "http://127.0.0.1:9014/healthz" in calls
+    assert "http://127.0.0.1:9014/" not in calls
 
 
 def test_api_status_keeps_legacy_probe_paths(monkeypatch):
@@ -57,10 +58,26 @@ def test_api_status_keeps_legacy_probe_paths(monkeypatch):
     assert stores["online"] is True
     assert "http://127.0.0.1:9014/healthz" in calls
     assert "http://127.0.0.1:9000/" in calls
-    assert all(url.endswith("/") for url in calls if ":9014" not in url)
+    assert all(url.endswith("/") for url in calls if ":9014" not in url and ":9011" not in url)
 
 
 def test_example_config_documents_stores_hostname():
     text = (ROOT / "config" / "services.local.json.example").read_text(encoding="utf-8")
     assert '"stores": "https://<your-hostname>"' in text
     assert json.loads(text)["stores"] == "https://<your-hostname>"
+
+
+def test_ykyd_entry_registered_and_probed(monkeypatch):
+    module = load_app(monkeypatch)
+    ykyd = next(s for s in module._SERVICE_DEFS if s["id"] == "ykyd")
+    assert ykyd["name"] == "一客一档"
+    assert ykyd["icon"] == "solution"
+    assert ykyd["port"] == 9011
+    assert ykyd["health"] == "/healthz"
+    assert 'id="i-solution"' in module._ds("sprite.svg")
+    calls = []
+    module._port_open = lambda *a, **k: True
+    module._http_ok = lambda url, timeout=1.2: calls.append(url) or True
+    row = next(r for r in module.probe_services() if r["id"] == "ykyd")
+    assert row["online"] is True
+    assert "http://127.0.0.1:9011/healthz" in calls
