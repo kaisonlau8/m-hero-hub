@@ -107,6 +107,16 @@ _SERVICE_DEFS = [
         "port": 9005,
         "accent": "blue",
     },
+    {
+        "id": "stores",
+        "icon": "shop",
+        "name": "门店管理",
+        "desc": "门店主数据：销售/售后门店关系、新增门店、退网结转",
+        "local": "http://127.0.0.1:9014",
+        "port": 9014,
+        "accent": "blue",
+        "health": "/healthz",
+    },
 ]
 
 
@@ -170,7 +180,12 @@ def probe_services() -> list[dict]:
         if vis is not None and svc["id"] not in vis:
             continue
         local_up = _port_open(int(svc["port"]))
-        healthy = local_up or _http_ok(svc["local"] + "/")
+        if svc.get("health"):
+            # 服务提供专用健康检查时以它为准（例如门店管理的 /healthz），
+            # 端口监听但依赖异常时仍应显示离线。
+            healthy = _http_ok(svc["local"] + svc["health"])
+        else:
+            healthy = local_up or _http_ok(svc["local"] + "/")
         rows.append({**svc, "online": bool(healthy), "local_up": bool(local_up)})
     return rows
 
