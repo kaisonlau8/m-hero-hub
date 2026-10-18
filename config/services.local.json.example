@@ -3,5 +3,6 @@
   "vip": "https://YOUR_PUBLIC_HOST_FOR_VIP",
   "district": "https://YOUR_PUBLIC_HOST_FOR_DISTRICT",
   "cleaner": "https://YOUR_PUBLIC_HOST_FOR_CLEANER",
-  "nss": "https://YOUR_PUBLIC_HOST_FOR_NSS"
+  "nss": "https://YOUR_PUBLIC_HOST_FOR_NSS",
+  "stores": "https://<your-hostname>"
 }
