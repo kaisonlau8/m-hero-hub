@@ -107,26 +107,7 @@ _SERVICE_DEFS = [
         "port": 9005,
         "accent": "blue",
     },
-    {
-        "id": "stores",
-        "icon": "shop",
-        "name": "门店管理",
-        "desc": "门店主数据：销售/售后门店关系、新增门店、退网结转",
-        "local": "http://127.0.0.1:9014",
-        "port": 9014,
-        "accent": "blue",
-        "health": "/healthz",
-    },
-    {
-        "id": "ykyd",
-        "icon": "solution",
-        "name": "一客一档",
-        "desc": "客户档案：车主与车辆、到店与服务记录查询",
-        "local": "http://127.0.0.1:9011",
-        "port": 9011,
-        "accent": "blue",
-        "health": "/healthz",
-    },
+    # 2026-10-19：门店管理（stores, :9014）与一客一档（ykyd, :9011）已下线封存，入口移除
 ]
 
 
@@ -191,7 +172,7 @@ def probe_services() -> list[dict]:
             continue
         local_up = _port_open(int(svc["port"]))
         if svc.get("health"):
-            # 服务提供专用健康检查时以它为准（例如门店管理的 /healthz），
+            # 服务提供专用健康检查（svc["health"]）时以它为准，
             # 端口监听但依赖异常时仍应显示离线。
             healthy = _http_ok(svc["local"] + svc["health"])
         else:
