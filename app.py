@@ -49,7 +49,7 @@ def favicon_ico():
 
 # --- m-hero SSO (Casdoor): inert unless MHERO_AUTH[_HUB]=audit|on is set (see docs/SSO_CASDOOR.md) ---
 from mhero_auth.flask_adapter import init_app as _mhero_auth_init
-_auth = _mhero_auth_init(app, "hub", default_mode="off", public_get_paths=["/healthz", "/ds/brand/*", "/favicon.ico"], admin_paths=["/admin/*"], supervisor_write_paths=["/account/password"], userbar=True, userbar_account_url="/account", userbar_accounts_url="/admin/accounts")   # top-right user bar: 账号设置 + 退出登录
+_auth = _mhero_auth_init(app, "hub", default_mode="off", public_get_paths=["/healthz", "/ds/brand/*", "/favicon.ico"], admin_paths=["/admin/*"], account_paths=["/admin/accounts*"], any_role_paths=["/account/password"], user_get_paths=["/*"], userbar=True, userbar_account_url="/account", userbar_accounts_url="/admin/accounts")   # top-right user bar: 账号设置 + 退出登录
 
 # 默认只写本地入口；公网 URL 放在未入库的 config/services.local.json
 _SERVICE_DEFS = [
@@ -159,8 +159,8 @@ def _visible_ids() -> set[str] | None:
     s = getattr(g, "mhero_session", None)
     if s is None or s.via != "session":
         return None if s is not None else set()
-    if s.ga:
-        return None
+    if s.ga or getattr(s, "gr", False):
+        return None                 # global super / read-only admin: every system
     return set(s.apps)
 
 
@@ -234,7 +234,8 @@ def index():
 
 
 # ---------------------------------------------------------------- 账号管理（仅管理员；经 Casdoor 管理 API，凭据只在服务端）
-_ACTIONS = {"create": "新建账号", "reset_password": "重置密码（管理员设定新密码）", "set_level": "修改身份", "set_apps": "修改可访问系统", "set_disabled": "停用 / 启用账号"}
+_ACTIONS = {"create": "新建账号", "reset_password": "重置密码（管理员设定新密码）", "set_level": "修改身份", "set_apps": "修改可访问系统",
+            "set_app_role": "设置系统角色", "set_disabled": "停用 / 启用账号"}
 _account_svc = None
 
 
@@ -266,8 +267,10 @@ def _admin_actor():
 def _acct_render(msg="", err="", status=200, **extra):
     from mhero_auth.accounts import LEVELS
     from mhero_auth.core import APP_IDS, APP_LABEL
+    from mhero_auth.roles import APP_ROLE_LABEL
     svc = get_account_service()
     ctx = dict(configured=svc is not None, rows=[], audit=[], msg=msg, err=err, late_err="", levels=LEVELS, app_ids=APP_IDS, app_label=APP_LABEL,
+               app_role_label=APP_ROLE_LABEL,
                actor=_admin_actor().name, require_app=_auth.cfg.require_app, confirm=None)
     ctx.update(extra)
 
@@ -294,8 +297,19 @@ def _form_params() -> tuple[str, dict]:
     f = request.form
     action = f.get("action", "")
     p = {"name": (f.get("name") or "").strip().lower(), "display": (f.get("display") or "").strip(), "password": f.get("password", ""),
-         "level": f.get("level", ""), "apps": sorted(f.getlist("apps")), "disabled": f.get("disabled", "")}
+         "level": f.get("level", ""), "apps": sorted(f.getlist("apps")), "disabled": f.get("disabled", ""),
+         "app": f.get("app", ""), "app_role": f.get("app_role", "")}
     return action, p
+
+
+def _role_label(r: str) -> str:
+    from mhero_auth.roles import ROLE_LABEL
+    return ROLE_LABEL.get(r, "跟随统一身份" if not r else r)
+
+
+def _app_label(a: str) -> str:
+    from mhero_auth.core import APP_LABEL
+    return APP_LABEL.get(a, a)
 
 
 @app.post("/admin/accounts/prepare")
@@ -314,10 +328,11 @@ def accounts_prepare():
     except AccountError as exc:
         return _acct_render(err=str(exc), status=400)
     token = svc.make_token(actor.name, action, p)
-    summary = {"create": f"新建账号 {p['name']}（{p['display'] or p['name']}），身份 {p['level']}，系统：{', '.join(p['apps']) or '无'}。初始密码由你设定，首次登录强制改密。",
+    summary = {"create": f"新建账号 {p['name']}（{p['display'] or p['name']}），身份 {_role_label(p['level'])}，系统：{', '.join(p['apps']) or '无'}。初始密码由你设定，首次登录强制改密。",
                "reset_password": f"为 {p['name']} 设定新密码；对方旧登录立即作废，下次登录必须改密。",
-               "set_level": f"把 {p['name']} 的身份改为 {p['level']}；对方需要重新登录。",
+               "set_level": f"把 {p['name']} 的身份改为 {_role_label(p['level'])}；对方需要重新登录。",
                "set_apps": f"把 {p['name']} 可访问的系统改为：{', '.join(p['apps']) or '无'}；对方需要重新登录。",
+               "set_app_role": f"把 {p['name']} 在「{_app_label(p['app'])}」里的角色设为：{_role_label(p['app_role'])}；对方需要重新登录。",
                "set_disabled": f"{'停用' if p['disabled'] == '1' else '启用'}账号 {p['name']}；{'对方登录立即作废。' if p['disabled'] == '1' else ''}"}[action]
     return _acct_render(confirm={"action": action, "title": _ACTIONS[action], "summary": summary, "params": p, "token": token})
 
@@ -344,6 +359,8 @@ def accounts_execute():
             svc.set_level(actor.name, p["name"], p["level"])
         elif action == "set_apps":
             svc.set_apps(actor.name, p["name"], p["apps"])
+        elif action == "set_app_role":
+            svc.set_app_role(actor.name, p["name"], p["app"], p["app_role"])
         else:
             svc.set_disabled(actor.name, p["name"], p["disabled"] == "1")
     except AccountError as exc:

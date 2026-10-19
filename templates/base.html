@@ -84,7 +84,7 @@
       <button type="button" aria-haspopup="true" aria-expanded="false">
         <span class="avatar"><svg class="ai" aria-hidden="true"><use href="#i-user"/></svg></span>
         <span class="n">{{ mhero_user.display or mhero_user.name }}</span>
-        <span class="ant-tag {{ 'ant-tag-processing' if mhero_user.role == 'admin' }}">{{ {'admin': '管理员', 'supervisor': '督导'}.get(mhero_user.role, mhero_user.role) }}</span>
+        <span class="ant-tag {{ 'ant-tag-processing' if mhero_user.role == 'admin' }}">{{ {'admin': '超级管理员', 'readonly_admin': '只读管理员', 'supervisor': '督导', 'user': '用户'}.get(mhero_user.role, mhero_user.role) }}</span>
         <svg class="ai dd-caret" aria-hidden="true"><use href="#i-caret-down"/></svg>
       </button>
       <div class="dd" role="menu">
