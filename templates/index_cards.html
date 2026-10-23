@@ -15,7 +15,7 @@
   <div class="card hub-card" data-id="{{ s.id }}">
     <div class="hub-card-top">
       <span class="hub-ico t-{{ s.accent }}"><svg class="ai" aria-hidden="true"><use href="#i-{{ s.icon }}"/></svg></span>
-      <span class="ant-tag {{ 'ant-tag-success' if s.online else 'ant-tag-error' }}" data-role="badge" title="本地 :{{ s.port }}">{{ '在线' if s.online else '离线' }}</span>
+      <span class="ant-tag {{ 'ant-tag-success' if s.online else 'ant-tag-error' }}" data-role="badge"{% if s.port %} title="本地 :{{ s.port }}"{% endif %}>{{ '在线' if s.online else '离线' }}</span>
     </div>
     <h3>{{ s.name }}</h3>
     <p class="hub-desc">{{ s.desc }}</p>

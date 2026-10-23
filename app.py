@@ -107,6 +107,16 @@ _SERVICE_DEFS = [
         "port": 9005,
         "accent": "blue",
     },
+    {
+        "id": "store_map",
+        "icon": "shop",
+        "name": "售后网点地图",
+        "desc": "一网、二网售后网点地图",
+        # 静态公网站点，无本地监听端口。登录黄页即可看到，不按可访问系统过滤。
+        "local": "https://storelocation-m-hero.41box.com",
+        "accent": "purple",
+        "always_visible": True,
+    },
     # 2026-10-19：门店管理（stores, :9014）与一客一档（ykyd, :9011）已下线封存，入口移除
 ]
 
@@ -168,13 +178,18 @@ def probe_services() -> list[dict]:
     rows = []
     vis = _visible_ids()
     for svc in _services():
-        if vis is not None and svc["id"] not in vis:
+        # always_visible：登录即可，不看 s.apps（站点本身无鉴权，例如售后网点地图）。
+        if vis is not None and not svc.get("always_visible") and svc["id"] not in vis:
             continue
-        local_up = _port_open(int(svc["port"]))
+        port = svc.get("port")
+        local_up = _port_open(int(port)) if port else False
         if svc.get("health"):
             # 服务提供专用健康检查（svc["health"]）时以它为准，
             # 端口监听但依赖异常时仍应显示离线。
             healthy = _http_ok(svc["local"] + svc["health"])
+        elif not port:
+            # 无本地端口：探活实际打开的地址（公网覆盖或 local 默认），避免假端口永远离线。
+            healthy = _http_ok(svc["url"].rstrip("/") + "/")
         else:
             healthy = local_up or _http_ok(svc["local"] + "/")
         rows.append({**svc, "online": bool(healthy), "local_up": bool(local_up)})
